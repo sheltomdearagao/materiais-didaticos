@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Redação | Prof. Sheltom de Aragão</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: #60a5fa;
+            --secondary: #0ea5e9;
+            --accent: #0284c7;
+            --light: #f0f9ff;
+            --dark: #0f172a;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f8fafc;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 0;
+        }
+        
+        .hero {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 2rem 0;
+        }
+        
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin-bottom: 2rem;
+        }
+        
+        .classes-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .class-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .class-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .card-header {
+            padding: 1.5rem;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .card-header.nono {
+            background: linear-gradient(135deg, #3b82f6 0%, #0ea5e9 100%);
+        }
+        
+        .card-header.primeira {
+            background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+        }
+        
+        .card-header.segunda {
+            background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
+        }
+        
+        .card-header.terceira {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .material-list {
+            list-style-type: none;
+        }
+        
+        .material-list li {
+            margin-bottom: 0.8rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+        
+        .material-list li:before {
+            content: "📝";
+            position: absolute;
+            left: 0;
+        }
+        
+        .material-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+        
+        .material-link:hover {
+            color: var(--accent);
+            text-decoration: underline;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 1rem;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.4);
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+            padding-bottom: 1rem;
+        }
+        
+        .section-title::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 2px;
+        }
+        
+        .welcome-message {
+            background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%);
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .footer {
+            background: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 4rem;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .classes-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1>Portal de Redação</h1>
+            <p>Professor Sheltom de Aragão</p>
+        </div>
+    </header>
+    
+    <main class="container">
+        <div class="welcome-message">
+            <h2>Bem-vindo ao Portal de Redação!</h2>
+            <p>Aqui você encontrará todos os materiais necessários para aprimorar suas habilidades de escrita. Escolha sua série abaixo e bons estudos!</p>
+        </div>
+        
+        <section>
+            <h2 class="section-title">Materiais de Redação</h2>
+            
+            <div class="classes-container">
+                <!-- 9º Ano -->
+                <div class="class-card">
+                    <div class="card-header nono">9º Ano</div>
+                    <div class="card-body">
+                        <ul class="material-list">
+                            <li><a href="#" class="material-link">Estrutura do Texto Dissertativo</a></li>
+                            <li><a href="#" class="material-link">Técnicas de Argumentação</a></li>
+                            <li><a href="#" class="material-link">Coesão e Coerência</a></li>
+                            <li><a href="#" class="material-link">Exercícios Práticos</a></li>
+                        </ul>
+                        <a href="#" class="btn">Ver todos os materiais</a>
+                    </div>
+                </div>
+                
+                <!-- 1ª Série EM -->
+                <div class="class-card">
+                    <div class="card-header primeira">1ª Série EM</div>
+                    <div class="card-body">
+                        <ul class="material-list">
+                            <li><a href="#" class="material-link">Introdução à Redação ENEM</a></li>
+                            <li><a href="#" class="material-link">Competências e Habilidades</a></li>
+                            <li><a href="#" class="material-link">Análise de Temas Atuais</a></li>
+                            <li><a href="#" class="material-link">Modelos Comentados</a></li>
+                        </ul>
+                        <a href="#" class="btn">Ver todos os materiais</a>
+                    </div>
+                </div>
+                
+                <!-- 2ª Série EM -->
+                <div class="class-card">
+                    <div class="card-header segunda">2ª Série EM</div>
+                    <div class="card-body">
+                        <ul class="material-list">
+                            <li><a href="#" class="material-link">Repertório Sociocultural</a></li>
+                            <li><a href="#" class="material-link">Proposta de Intervenção</a></li>
+                            <li><a href="#" class="material-link">Tipologias Textuais</a></li>
+                            <li><a href="#" class="material-link">Redações Nota 1000</a></li>
+                        </ul>
+                        <a href="#" class="btn">Ver todos os materiais</a>
+                    </div>
+                </div>
+                
+                <!-- 3ª Série EM -->
+                <div class="class-card">
+                    <div class="card-header terceira">3ª Série EM</div>
+                    <div class="card-body">
+                        <ul class="material-list">
+                            <li><a href="#" class="material-link">Simulados ENEM</a></li>
+                            <li><a href="#" class="material-link">Temas Frequentes</a></li>
+                            <li><a href="#" class="material-link">Técnicas Avançadas</a></li>
+                            <li><a href="#" class="material-link">Revisão e Autoanálise</a></li>
+                        </ul>
+                        <a href="#" class="btn">Ver todos os materiais</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer class="footer">
+        <div class="container">
+            <p>© 2025 - Portal de Redação | Professor Sheltom de Aragão</p>
+            <p>Todos os direitos reservados</p>
+        </div>
+    </footer>
+</body>
+</html>
