@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fale Conosco | Prof. Sheltom de Aragão</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: #60a5fa;
+            --secondary: #0ea5e9;
+            --accent: #0284c7;
+            --light: #f0f9ff;
+            --dark: #0f172a;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f8fafc;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 0;
+        }
+        
+        .nav {
+            display: flex;
+            justify-content: center;
+            background-color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        .nav a {
+            color: var(--dark);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+        
+        .nav a:hover {
+            color: var(--primary);
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+            padding-bottom: 1rem;
+        }
+        
+        .section-title::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 2px;
+        }
+        
+        .contact-section {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+        }
+        
+        .contact-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .contact-info-card {
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .contact-info-card h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .contact-info-card p {
+            margin-bottom: 0.7rem;
+        }
+        
+        .contact-icon {
+            margin-right: 10px;
+            color: var(--accent);
+        }
+        
+        .contact-form {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+        }
+        
+        textarea.form-control {
+            min-height: 150px;
+            resize: vertical;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.4);
+        }
+        
+        .faq-section {
+            margin-top: 4rem;
+        }
+        
+        .faq-item {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .faq-question {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.8rem;
+            font-size: 1.1rem;
+        }
+        
+        .footer {
+            background: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 4rem;
+        }
+        
+        @media (max-width: 768px) {
+            .contact-info {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1>Fale Conosco</h1>
+            <p>Entre em contato com o Prof. Sheltom de Aragão</p>
+        </div>
+    </header>
+    
+    <nav class="nav">
+        <ul>
+            <li><a href="index.html">Início</a></li>
+            <li><a href="sobre.html">Sobre</a></li>
+            <li><a href="papo-de-prof.html">Papo de Prof</a></li>
+            <li><a href="fale-conosco.html">Fale Conosco</a></li>
+        </ul>
+    </nav>
+    
+    <main class="container">
+        <section class="contact-section">
+            <h2 class="section-title">Informações de Contato</h2>
+            
+            <div class="contact-info">
+                <div class="contact-info-card">
+                    <h3>Horário de Atendimento</h3>
+                    <p><span class="contact-icon">📅</span> Segunda a Sexta-feira</p>
+                    <p><span class="contact-icon">⏰</span> 8h às 18h</p>
+                    <p style="font-style: italic; margin-top: 1rem;">* Atendimentos fora desse horário podem ser agendados por e-mail.</p>
+                </div>
+                
+                <div class="contact-info-card">
+                    <h3>Contatos</h3>
+                    <p><span class="contact-icon">📧</span> E-mail: contato@profsheltom.com.br</p>
+                    <p><span class="contact-icon">📱</span> WhatsApp: (00) 98765-4321</p>
+                    <p><span class="contact-icon">📍</span> Localização: Online</p>
+                </div>
+            </div>
+            
+            <div class="contact-form">
+                <h2 class="section-title">Envie sua Mensagem</h2>
+                <form action="#" method="POST">
+                    <div class="form-group">
+                        <label for="name">Nome Completo</label>
+                        <input type="text" id="name" name="name" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">E-mail</label>
+                        <input type="email" id="email" name="email" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="subject">Assunto</label>
+                        <select id="subject" name="subject" class="form-control" required>
+                            <option value="">Selecione um assunto</option>
+                            <option value="duvida">Dúvida sobre conteúdo</option>
+                            <option value="feedback">Feedback sobre material</option>
+                            <option value="sugestao">Sugestão de tema</option>
+                            <option value="correcao">Solicitação de correção</option>
+                            <option value="outro">Outro assunto</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message">Mensagem</label>
+                        <textarea id="message" name="message" class="form-control" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button type="submit" class="btn">Enviar Mensagem</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+        
+        <section class="faq-section">
+            <h2 class="section-title">Perguntas Frequentes</h2>
+            
+            <div class="faq-item">
+                <p class="faq-question">Como posso receber feedback sobre minhas redações?</p>
+                <p>Para receber correções e feedback personalizado, envie sua redação para o e-mail contato@profsheltom.com.br com o assunto "Correção de Redação" ou utilize o formulário acima selecionando "Solicitação de correção" como assunto.</p>
+            </div>
+            
+            <div class="faq-item">
+                <p class="faq-question">Os materiais disponíveis no portal são gratuitos?</p>
+                <p>Sim, todos os materiais disponibilizados no Portal de Redação são gratuitos e de livre acesso para estudantes e professores que desejam aprimorar suas habilidades de escrita.</p>
+            </div>
+            
+            <div class="faq-item">
+                <p class="faq-question">Posso sugerir temas para novas propostas de redação?</p>
+                <p>Com certeza! Ficamos muito felizes em receber sugestões de temas relevantes para novas propostas. Utilize o formulário acima ou envie um e-mail com suas ideias.</p>
+            </div>
+            
+            <div class="faq-item">
+                <p class="faq-question">O Prof. Sheltom oferece aulas particulares ou em grupo?</p>
+                <p>Sim, são oferecidas tanto aulas particulares quanto em grupo, no formato online. Para mais informações sobre horários disponíveis e valores, entre em contato por e-mail ou WhatsApp.</p>
+            </div>
+        </section>
+    </main>
+    
+    <footer class="footer">
+        <div class="container">
+            <p>© 2025 - Portal de Redação | Professor Sheltom de Aragão</p>
+            <p>Todos os direitos reservados</p>
+        </div>
+    </footer>
+</body>
+</html>
