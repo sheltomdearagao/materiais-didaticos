@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Papo de Prof | Prof. Sheltom de Aragão</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: #60a5fa;
+            --secondary: #0ea5e9;
+            --accent: #0284c7;
+            --light: #f0f9ff;
+            --dark: #0f172a;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f8fafc;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 0;
+        }
+        
+        .hero {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 2rem 0;
+        }
+        
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin-bottom: 2rem;
+        }
+        
+        .formations-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .formation-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .formation-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .formation-header {
+            padding: 1.5rem;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .formation-header.tecnologia {
+            background: linear-gradient(135deg, #3b82f6 0%, #0ea5e9 100%);
+        }
+        
+        .formation-header.metodologias {
+            background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+        }
+        
+        .formation-header.avaliacao {
+            background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
+        }
+        
+        .formation-header.inclusao {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        }
+        
+        .formation-header.projetos {
+            background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
+        }
+        
+        .formation-header.alfabetizacao {
+            background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .material-list {
+            list-style-type: none;
+        }
+        
+        .material-list li {
+            margin-bottom: 0.8rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+        
+        .material-type-icon {
+            position: absolute;
+            left: 0;
+        }
+        
+        .material-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+        
+        .material-link:hover {
+            color: var(--accent);
+            text-decoration: underline;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 1rem;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.4);
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+            padding-bottom: 1rem;
+        }
+        
+        .section-title::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 2px;
+        }
+        
+        .intro-message {
+            background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%);
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .footer {
+            background: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 4rem;
+        }
+        
+        /* Estilos para a navegação */
+        .nav-container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+        }
+        
+        .main-nav {
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .nav-links {
+            display: flex;
+            margin-left: 2rem;
+        }
+        
+        .nav-links li {
+            list-style: none;
+            margin-left: 1.5rem;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease, transform 0.2s ease;
+            padding: 0.5rem 0;
+            position: relative;
+        }
+        
+        .nav-links a:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: white;
+            transition: width 0.3s ease;
+        }
+        
+        .nav-links a:hover:after {
+            width: 100%;
+        }
+        
+        /* Filtro para materiais */
+        .filter-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .filter-btn {
+            background: white;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        /* Estilos para menu mobile */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .card-date {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+        
+        .card-description {
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .formations-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .nav-links {
+                position: fixed;
+                top: 0;
+                left: -100%;
+                width: 70%;
+                height: 100vh;
+                background: var(--primary);
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                transition: left 0.3s ease;
+                margin: 0;
+                padding: 2rem;
+                z-index: 100;
+            }
+            
+            .nav-links.active {
+                left: 0;
+            }
+            
+            .nav-links li {
+                margin: 1.5rem 0;
+            }
+            
+            .nav-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                display: none;
+                z-index: 99;
+            }
+            
+            .nav-overlay.active {
+                display: block;
+            }
+            
+            .filter-container {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="nav-container">
+            <nav class="main-nav">
+                <a href="index.html" class="nav-logo">Portal de Redação</a>
+                <ul class="nav-links" id="navLinks">
+                    <li><a href="papo-de-prof.html" class="active">Papo de Prof</a></li>
+                    <li><a href="fale-conosco.html">Fale Conosco</a></li>
+                    <li><a href="sobre.html">Sobre</a></li>
+                </ul>
+                <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+            </nav>
+        </div>
+        <div class="container">
+            <h1>Papo de Prof</h1>
+            <p>Materiais para formação continuada</p>
+        </div>
+    </header>
+    
+    <main class="container">
+        <div class="intro-message">
+            <h2>Espaço para compartilhamento de materiais de formação</h2>
+            <p>Aqui você encontrará slides, aplicativos, listas de exercícios, e-books e muito mais para aprimorar sua prática docente. Materiais das formações que ministro em escolas de todo o Brasil.</p>
+        </div>
+        
+        <div class="filter-container">
+            <button class="filter-btn active" data-filter="all">Todos</button>
+            <button class="filter-btn" data-filter="tecnologia">Tecnologia</button>
+            <button class="filter-btn" data-filter="metodologias">Metodologias Ativas</button>
+            <button class="filter-btn" data-filter="avaliacao">Avaliação</button>
+            <button class="filter-btn" data-filter="inclusao">Educação Inclusiva</button>
+            <button class="filter-btn" data-filter="projetos">Projetos</button>
+            <button class="filter-btn" data-filter="alfabetizacao">Alfabetização</button>
+        </div>
+        
+        <section>
+            <h2 class="section-title">Materiais de Formação</h2>
+            
+            <div class="formations-container">
+                <!-- Tecnologia na Educação -->
+                <div class="formation-card" data-category="tecnologia">
+                    <div class="formation-header tecnologia">Tecnologia na Educação</div>
+                    <div class="card-body">
+                        <div class="card-date">Última atualização: 28/04/2025</div>
+                        <p class="card-description">Recursos e estrategias para integrar tecnologia na sala de aula de forma significativa e produtiva.</p>
+                        <ul class="material-list">
+                            <li><span class="material-type-icon">📊</span><a href="#" class="material-link">Slides da Formação</a></li>
+                            <li><span class="material-type-icon">📱</span><a href="#" class="material-link">Lista de Apps Educacionais</a></li>
+                            <li><span class="material-type-icon">📄</span><a href="#" class="material-link">Guia de Ferramentas Digitais</a></li>
+                            <li><span class="material-type-icon">📚</span><a href="#" class="material-link">E-book: Tecnologia em Sala</a></li>
+                        </ul>
+                        <a href="#" class="btn">Ver todos os materiais</a>
+                    </div>
+                </div>
+                
+                <!-- Metodologias Ativas -->
+                <div class="formation-card" data-category="metodologias">
+                    <div class="formation-header metodologias">Metodologias Ativas</div>
+                    <div class="card-body">
+                        <div class="card-date">Última atualização: 15/04/2025</div>
+                        <p class="card-description">Aprenda a implementar metodologias que colocam o aluno como protagonista do processo de aprendizagem.</p>
+                        <ul class="material-list">
+                            <li><span class="material-type-icon">📊</span><a href="#" class="material-link">Apresentação Completa</a></li>
+                            <li><span class="material-type-icon">📝</span><a href="#" class="material-link">Roteiros de Aplicação</a></li>
+                            <li><span class="material-type-icon">🎮</span><a href="#" class="material-link">Jogos e Dinâmicas</a></li>
+                            <li><span class="material-type-icon">📋</span><a href="#" class="material-link">Modelos de Planos de Aula</a></li>
+                        </ul>
+                        <a href="#" class="btn">Ver todos os materiais</a>
+                    </div>
+                </div>
+                
+                <!-- Avaliação Formativa -->
+                <div class="formation-card" data-category="avaliacao">
+                    <div class="formation-header avaliacao">Avaliação Formativa</div>
+                    <div class="card-body">
+                        <div class="card-date">Última atualização: 02/05/2025</div>
+                        <p class="card-description">Estratégias e instrumentos para uma avaliação contínua e significativa no processo de ensino-aprendizagem.</p>
+                        <ul class="material-list">
+                            <li><span class="material-type-icon">📊</span><a href="#" class="material-link">Slides sobre Avaliação</a></li>
+                            <li><span class="material-type-icon">📝</span><a href="#" class="material-link">Modelos de Rubricas</a></li>
+                            <li><span class="material-type-icon">📄</span><a href="#" class="material-link">Exemplos de Feedback</a></li>
+                            <li><span class="material-type-icon">📑</span><a href="#" class="material-link">Instrumentos Avaliativos</a></li>
+                        </ul>
+                        <a href="#" class="btn">Ver todos os materiais</a>
+                    </div>
+                </div>
+                
+                <!-- Educação Inclusiva -->
+                <div class="formation-card" data-category="inclusao">
+                    <div class="formation-header inclusao">Educação Inclusiva</div>
+                    <div class="card-body">
+                        <div class="card-date">Última atualização: 10/04/2025</div>
+                        <p class="card-description">Recursos e estratégias para promover uma educação inclusiva e acessível a todos os estudantes.</p>
+                        <ul class="material-list">
+                            <li><span class="material-type-icon">📊</span><a href="#" class="material-link">Apresentação Completa</a></li>
+                            <li><span class="material-type-icon">📓</span><a href="#" class="material-link">Guia de Adaptações Curriculares</a></li>
+                            <li><span class="material-type-icon">🖼️</span><a href="#" class="material-link">Recursos Visuais Adaptados</a></li>
+                            <li><span class="material-type-icon">📚</span><a href="#" class="material-link">E-book: Inclusão na Prática</a></li>
+                        </ul>
+                        <a href="#" class="btn">Ver todos os materiais</a>
+                    </div>
+                </div>
+                
+                <!-- Aprendizagem Baseada em Projetos -->
+                <div class="formation-card" data-category="projetos">
+                    <div class="formation-header projetos">Aprendizagem Baseada em Projetos</div>
+                    <div class="card-body">
+                        <div class="card-date">Última atualização: 22/04/2025</div>
+                        <p class="card-description">Desenvolva projetos interdisciplinares significativos e conectados com a realidade dos estudantes.</p>
+                        <ul class="material-list">
+                            <li><span class="material-type-icon">📊</span><a href="#" class="material-link">Slides da Formação</a></li>
+                            <li><span class="material-type-icon">📋</span><a href="#" class="material-link">Templates de Projetos</a></li>
+                            <li><span class="material-type-icon">📝</span><a href="#" class="material-link">Roteiro de Elaboração</a></li>
+                            <li><span class="material-type-icon">🎬</span><a href="#" class="material-link">Vídeos de Casos de Sucesso</a></li>
+                        </ul>
+                        <a href="#" class="btn">Ver todos os materiais</a>
+                    </div>
+                </div>
+                
+                <!-- Alfabetização e Letramento -->
+                <div class="formation-card" data-category="alfabetizacao">
+                    <div class="formation-header alfabetizacao">Alfabetização e Letramento</div>
+                    <div class="card-body">
+                        <div class="card-date">Última atualização: 05/05/2025</div>
+                        <p class="card-description">Práticas eficientes para alfabetizar com significado e desenvolver o letramento desde cedo.</p>
+                        <ul class="material-list">
+                            <li><span class="material-type-icon">📊</span><a href="#" class="material-link">Apresentação da Formação</a></li>
+                            <li><span class="material-type-icon">🎲</span><a href="#" class="material-link">Jogos Pedagógicos</a></li>
+                            <li><span class="material-type-icon">📄</span><a href="#" class="material-link">Sequências Didáticas</a></li>
+                            <li><span class="material-type-icon">🎯</span><a href="#" class="material-link">Atividades Práticas</a></li>
+                        </ul>
+                        <a href="#" class="btn">Ver todos os materiais</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer class="footer">
+        <div class="container">
+            <p>© 2025 - Portal de Redação | Professor Sheltom de Aragão</p>
+            <p>Todos os direitos reservados</p>
+        </div>
+    </footer>
+
+    <script>
+        // Script para o menu mobile
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const navLinks = document.getElementById('navLinks');
+        
+        // Criar overlay para o menu mobile
+        const navOverlay = document.createElement('div');
+        navOverlay.className = 'nav-overlay';
+        document.body.appendChild(navOverlay);
+        
+        // Função para alternar o menu
+        function toggleMenu() {
+            navLinks.classList.toggle('active');
+            navOverlay.classList.toggle('active');
+        }
+        
+        // Event listeners para o menu
+        mobileMenuBtn.addEventListener('click', toggleMenu);
+        navOverlay.addEventListener('click', toggleMenu);
+        
+        // Script para filtrar formações
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const formationCards = document.querySelectorAll('.formation-card');
+        
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Atualizar botão ativo
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                // Filtrar cartões
+                const filter = button.getAttribute('data-filter');
+                
+                formationCards.forEach(card => {
+                    if (filter === 'all' || card.getAttribute('data-category') === filter) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
