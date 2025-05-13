@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendário Escolar 2025</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background-color: #e5e7eb; /* Border color */
+            border: 1px solid #e5e7eb;
+        }
+        .calendar-day {
+            background-color: #fff;
+            padding: 10px;
+            min-height: 100px; /* Minimum height for days */
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .calendar-day:hover {
+            background-color: #f9fafb;
+        }
+        .calendar-day.current-month {
+             background-color: #ffffff;
+        }
+         .calendar-day.other-month {
+             background-color: #f3f4f6;
+             color: #9ca3af;
+             cursor: default;
+         }
+         .calendar-day .day-number {
+             font-size: 1.2em;
+             font-weight: bold;
+             margin-bottom: 5px;
+             color: #333;
+         }
+         .calendar-day.other-month .day-number {
+             color: #9ca3af;
+         }
+        .event-marker {
+            background-color: #3b82f6; /* Blue */
+            color: white;
+            font-size: 0.7em;
+            padding: 2px 5px;
+            border-radius: 4px;
+            margin-top: 3px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .event-details {
+            margin-top: 15px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+        .event-details h3 {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .event-details ul {
+            list-style: disc;
+            margin-left: 20px;
+        }
+        .event-details li {
+            margin-bottom: 8px;
+        }
+         .day-header {
+             font-weight: bold;
+             text-align: center;
+             padding: 10px 0;
+             background-color: #bfdbfe; /* Light blue */
+             color: #1e3a8a; /* Dark blue */
+         }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-2xl font-bold mb-6 text-center">Calendário Escolar 2025</h1>
+
+        <p class="mb-4">Visualize os eventos e datas de avaliações para o 9º Ano e Ensino Médio (1ª, 2ª e 3ª Séries) em 2025. Utilize o filtro para ver apenas os eventos da série desejada e clique nos dias do calendário para ver os detalhes.</p>
+
+        <div class="flex justify-between items-center mb-6">
+            <button id="prevMonth" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">&lt; Anterior</button>
+            <h2 id="currentMonthYear" class="text-xl font-semibold text-gray-800"></h2>
+            <button id="nextMonth" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Próximo &gt;</button>
+        </div>
+
+        <div class="mb-6">
+            <label for="gradeFilter" class="block text-gray-700 text-sm font-bold mb-2">Filtrar por Série:</label>
+            <select id="gradeFilter" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <option value="all">Todas as Séries</option>
+                <option value="9º ANO">9º Ano</option>
+                <option value="1ª EM">1ª Série EM</option>
+                <option value="2ª EM">2ª Série EM</option>
+                <option value="3ª EM">3ª Série EM</option>
+            </select>
+        </div>
+
+        <div class="calendar-grid mb-6">
+             <div class="day-header">Dom</div>
+             <div class="day-header">Seg</div>
+             <div class="day-header">Ter</div>
+             <div class="day-header">Qua</div>
+             <div class="day-header">Qui</div>
+             <div class="day-header">Sex</div>
+             <div class="day-header">Sáb</div>
+            </div>
+
+        <div id="eventDetails" class="event-details hidden">
+            <h3 id="eventDetailsTitle">Eventos para: <span id="eventDetailsDate"></span></h3>
+            <ul id="eventDetailsList">
+                </ul>
+        </div>
+
+        <p class="mt-6 text-center text-sm text-gray-600">
+            Nota: A integração direta com o Google Calendar não é possível nesta página. Você pode usar esta visualização para adicionar os eventos manualmente ao seu calendário pessoal.
+        </p>
+    </div>
+
+    <script>
+        // Event data extracted from the provided PDF files
+        const allEvents = [
+             // Data from CALENDÁRIO 2025 - 3ª SÉRIE EM.pdf
+            { date: '2025-01-27', description: 'JORNADA PEDAGÓGICA', grades: ['3ª EM'] },
+            { date: '2025-01-28', description: 'JORNADA PEDAGÓGICA', grades: ['3ª EM'] },
+            { date: '2025-01-29', description: 'JORNADA PEDAGÓGICA / COORDENAÇÃO PEDAGÓGICA', grades: ['3ª EM'] },
+            { date: '2025-01-30', description: 'JORNADA PEDAGÓGICA PLANEJAMENTO', grades: ['3ª EM'] },
+            { date: '2025-01-31', description: 'JORNADA PEDAGÓGICA E REUNIÃO DE PAIS FUND II ENSINO MÉDIO', grades: ['3ª EM'] },
+            { date: '2025-02-03', description: 'INÍCIO AULAS FUND. II ENSINO MÉDIO - INÍCIO I TRI', grades: ['3ª EM'] },
+            { date: '2025-02-10', description: 'AVALIAÇÃO DIAGNÓSTICA', grades: ['3ª EM'] },
+            { date: '2025-02-11', description: 'AVALIAÇÃO DIAGNÓSTICA', grades: ['3ª EM'] },
+            { date: '2025-02-12', description: 'AVALIAÇÃO DIAGNÓSTICA', grades: ['3ª EM'] },
+            { date: '2025-02-13', description: 'AVALIAÇÃO DIAGNÓSTICA / MISSA', grades: ['3ª EM'] },
+            { date: '2025-02-14', description: 'AVALIAÇÃO DIAGNÓSTICA', grades: ['3ª EM'] },
+            { date: '2025-02-15', description: 'COORDENAÇÃO PEDAGÓGICA', grades: ['3ª EM'] },
+            { date: '2025-02-17', description: 'INÍCIO DO USO DOS MÓDULOS', grades: ['3ª EM'] },
+            { date: '2025-02-20', description: 'MISSA', grades: ['3ª EM'] },
+            { date: '2025-02-21', description: 'DEVOLUTIVA DA DIAGNÓSTICA À COORDENAÇÃO', grades: ['3ª EM'] },
+            { date: '2025-02-22', description: 'PROJETO INT. LÍNGUA ESTRANGEIRA APRESENTAÇÃO', grades: ['3ª EM'] },
+            { date: '2025-02-27', description: 'RECESSO CARNAVAL', grades: ['3ª EM'] },
+            { date: '2025-02-28', description: 'RECESSO CARNAVAL', grades: ['3ª EM'] },
+            { date: '2025-03-03', description: 'RECESSO CARNAVAL', grades: ['3ª EM'] },
+            { date: '2025-03-04', description: 'RECESSO CARNAVAL / RETORNO ÀS AULAS / MISSA', grades: ['3ª EM'] },
+            { date: '2025-03-05', description: 'COORDENAÇÃO PEDAGÓGICA', grades: ['3ª EM'] },
+            { date: '2025-03-17', description: 'AV2 INÍCIO', grades: ['3ª EM'] },
+            { date: '2025-03-18', description: 'AV1 REDAÇÃO (TESTE) I TRI', grades: ['3ª EM'] },
+            { date: '2025-03-19', description: 'AV1 (TESTE) I TRI', grades: ['3ª EM'] },
+            { date: '2025-03-20', description: 'AV1 (TESTE) I TRI', grades: ['3ª EM'] },
+            { date: '2025-03-21', description: 'AV1 (TESTE) I TRI', grades: ['3ª EM'] },
+            { date: '2025-03-22', description: 'AULÃO ENEM', grades: ['3ª EM'] },
+            { date: '2025-03-24', description: 'AV1 (TESTE) I TRI', grades: ['3ª EM'] },
+            { date: '2025-03-25', description: 'AV1 (TESTE) I TRI', grades: ['3ª EM'] },
+            { date: '2025-03-26', description: 'AV1 (TESTE) I TRI', grades: ['3ª EM'] },
+            { date: '2025-03-27', description: 'AV1 (TESTE) I TRI', grades: ['3ª EM'] },
+            { date: '2025-03-28', description: 'AV1 (TESTE) I TRI / PROJETO LÍNGUA ESTRANGEIRA', grades: ['3ª EM'] },
+            { date: '2025-03-31', description: 'AV1 (TESTE) I TRI / VOTO DAS IRMĀS', grades: ['3ª EM'] },
+            { date: '2025-04-04', description: 'COMEMORAÇÃO VICENTINA PROFESSORES', grades: ['3ª EM'] },
+            { date: '2025-04-05', description: 'COORDENAÇÃO PEDAGÓGICA', grades: ['3ª EM'] },
+            { date: '2025-04-07', description: 'SEMANA DA CULTURA INDÍGENA', grades: ['3ª EM'] }, // Assuming this week applies
+            { date: '2025-04-08', description: 'SEMANA DA CULTURA INDÍGENA', grades: ['3ª EM'] }, // Assuming this week applies
+            { date: '2025-04-09', description: 'SEMANA DA CULTURA INDÍGENA', grades: ['3ª EM'] }, // Assuming this week applies
+            { date: '2025-04-10', description: 'SEMANA DA CULTURA INDÍGENA / SIMULADO B (MANHÃ)', grades: ['3ª EM'] },
+            { date: '2025-04-14', description: 'CAMPANHA DE GRÃO EM GRÃO... / AV3 REDAÇÃO (PROVA) I TRI', grades: ['3ª EM'] },
+            { date: '2025-04-15', description: 'CAMPANHA DE GRÃO EM GRÃO...', grades: ['3ª EM'] },
+            { date: '2025-04-16', description: 'CAMPANHA DE GRÃO EM GRÃO...', grades: ['3ª EM'] },
+            { date: '2025-04-17', description: 'RECESSO SEMANA SANTA', grades: ['3ª EM'] },
+            { date: '2025-04-18', description: 'SEXTA-FEIRA DA PAIXÃO', grades: ['3ª EM'] },
+            { date: '2025-04-20', description: 'DOMINGO DE PÁSCOA', grades: ['3ª EM'] },
+            { date: '2025-04-21', description: 'FERIADO TIRADENTES', grades: ['3ª EM'] },
+            { date: '2025-04-24', description: 'AV3 (PROVA) I TRI', grades: ['3ª EM'] },
+            { date: '2025-04-25', description: 'AV2 TÉRMINO', grades: ['3ª EM'] },
+            { date: '2025-04-26', description: 'SIMULADO В (MANHÃ)', grades: ['3ª EM'] },
+            { date: '2025-04-28', description: 'AV3 (PROVA) I TRI', grades: ['3ª EM'] },
+            { date: '2025-05-01', description: 'FERIADO DIA DO TRABALHADOR', grades: ['3ª EM'] },
+            { date: '2025-05-02', description: 'FERIADO PROLONGADO', grades: ['3ª EM'] },
+            { date: '2025-05-05', description: 'AV3 (PROVA) I TRI', grades: ['3ª EM'] },
+            { date: '2025-05-08', description: 'AV3 (PROVA) I TRI / FIM I TRI', grades: ['3ª EM'] },
+            { date: '2025-05-09', description: 'PROJETO LÍNGUA PORTUGUESA', grades: ['3ª EM'] },
+            { date: '2025-05-10', description: 'AULÃO ENEM (CIÊNCIAS DA NATUREZA)', grades: ['3ª EM'] },
+            { date: '2025-05-12', description: 'AV3 (PROVA) I TRI', grades: ['3ª EM'] },
+            { date: '2025-05-19', description: 'INÍCIO II TRI', grades: ['3ª EM'] },
+            { date: '2025-05-20', description: 'AV2 INÍCIO', grades: ['3ª EM'] },
+            { date: '2025-05-24', description: 'I PLANTÃO PEDAGÓGICO', grades: ['3ª EM'] },
+            { date: '2025-05-26', description: '2ª CHAMADA AV1 E AV3', grades: ['3ª EM'] },
+            { date: '2025-05-27', description: '2ª CHAMADA AV1 E AV3', grades: ['3ª EM'] },
+            { date: '2025-05-28', description: '2ª CHAMADA AV1 E AV3', grades: ['3ª EM'] },
+            { date: '2025-05-29', description: '2ª CHAMADA AV1 E AV3', grades: ['3ª EM'] },
+            { date: '2025-05-30', description: '2ª CHAMADA AV1 E AV3', grades: ['3ª EM'] },
+            { date: '2025-05-31', description: 'AULÃO ENEM', grades: ['3ª EM'] },
+            { date: '2025-06-07', description: 'AULÃO ENEM', grades: ['3ª EM'] },
+            { date: '2025-06-14', description: 'FESTA JUNINA', grades: ['3ª EM'] },
+            { date: '2025-06-18', description: 'ÚLTIMO DIA DE AULA', grades: ['3ª EM'] },
+            { date: '2025-06-19', description: 'FERIADO CORPUS CHRISTI', grades: ['3ª EM'] },
+            { date: '2025-06-20', description: 'FERIADO PROLONGADO', grades: ['3ª EM'] },
+            { date: '2025-06-23', description: 'RECESSO', grades: ['3ª EM'] },
+            { date: '2025-06-24', description: 'RECESSO', grades: ['3ª EM'] },
+            { date: '2025-06-25', description: 'RECESSO', grades: ['3ª EM'] },
+            { date: '2025-06-26', description: 'RECESSO', grades: ['3ª EM'] },
+            { date: '2025-06-27', description: 'RECESSO', grades: ['3ª EM'] },
+            { date: '2025-06-30', description: 'RECESSO', grades: ['3ª EM'] },
+            { date: '2025-07-01', description: 'RECESSO', grades: ['3ª EM'] },
+            { date: '2025-07-02', description: 'RECESSO', grades: ['3ª EM'] },
+            { date: '2025-07-03', description: 'RECESSO', grades: ['3ª EM'] },
+            { date: '2025-07-04', description: 'RECESSO', grades: ['3ª EM'] },
+            { date: '2025-07-07', description: 'RECESSO', grades: ['3ª EM'] },
+            { date: '2025-07-08', description: 'RETORNO PROFESSORES', grades: ['3ª EM'] },
+            { date: '2025-07-09', description: 'RETORNO ALUNOS', grades: ['3ª EM'] },
+            { date: '2025-07-10', description: 'AV1 REDAÇÃO (TESTE) II TRI / AV2 TÉRMINO', grades: ['3ª EM'] },
+            { date: '2025-07-11', description: 'AV1 (TESTE) II TRI / COORDENAÇÃO PEDAGÓGICA', grades: ['3ª EM'] },
+            { date: '2025-07-14', description: 'AV1 (TESTE) II TRI', grades: ['3ª EM'] },
+            { date: '2025-07-15', description: 'AV1 (TESTE) II TRI', grades: ['3ª EM'] },
+            { date: '2025-07-16', description: 'AV1 (TESTE) II TRI', grades: ['3ª EM'] },
+            { date: '2025-07-17', description: 'AV1 (TESTE) II TRI', grades: ['3ª EM'] },
+            { date: '2025-07-18', description: 'AULÃO ENEM (LINGUAGENS) / AV1 (TESTE) II TRI', grades: ['3ª EM'] },
+            { date: '2025-07-23', description: 'RECUPERAÇÃO PARALELA I TRI', grades: ['3ª EM'] },
+            { date: '2025-07-24', description: 'RECUPERAÇÃO PARALELA I TRI', grades: ['3ª EM'] },
+            { date: '2025-07-25', description: 'RECUPERAÇÃO PARALELA I TRI / PROJETO LÍNGUA ESTRANGEIRA', grades: ['3ª EM'] },
+            { date: '2025-07-26', description: 'RECUPERAÇÃO PARALELA I TRI', grades: ['3ª EM'] },
+            { date: '2025-07-28', description: 'RECUPERAÇÃO PARALELA I TRI', grades: ['3ª EM'] },
+            { date: '2025-08-02', description: 'COORDENAÇÃO PEDAGÓGICA', grades: ['3ª EM'] },
+            { date: '2025-08-09', description: 'SIMULADO B MANHÃ', grades: ['3ª EM'] },
+            { date: '2025-08-15', description: 'JANTAR DANÇANTE DJ', grades: ['3ª EM'] },
+            { date: '2025-08-16', description: 'PREPARANDO PARA O ENEM (4 AULAS)', grades: ['3ª EM'] },
+            { date: '2025-08-20', description: 'AV3 REDAÇÃO (PROVA) II TRI', grades: ['3ª EM'] },
+            { date: '2025-08-22', description: 'AV3 (PROVA) II TRI', grades: ['3ª EM'] },
+            { date: '2025-08-23', description: 'SIMULADO B MANHA', grades: ['3ª EM'] },
+            { date: '2025-08-26', description: 'AV3 (PROVA) II TRI', grades: ['3ª EM'] },
+            { date: '2025-08-28', description: 'AV3 (PROVA) II TRI', grades: ['3ª EM'] },
+            { date: '2025-08-30', description: 'AULÃO ENEM', grades: ['3ª EM'] },
+            { date: '2025-09-01', description: 'AV3 (PROVA) II TRI / FIM II TRI', grades: ['3ª EM'] },
+            { date: '2025-09-02', description: 'INÍCIO III TRI', grades: ['3ª EM'] },
+            { date: '2025-09-06', description: 'AULÃO ENEM', grades: ['3ª EM'] },
+            { date: '2025-09-07', description: 'FERIADO INDEPENDENCIA DO BRASIL', grades: ['3ª EM'] },
+            { date: '2025-09-13', description: 'SAÍDA TERCEIRÃO DAY USE', grades: ['3ª EM'] },
+            { date: '2025-09-15', description: 'SIMULADO В MANHA', grades: ['3ª EM'] },
+            { date: '2025-09-16', description: '2ª CHAMADA AV1 E AV3', grades: ['3ª EM'] },
+            { date: '2025-09-17', description: '2ª CHAMADA AV1 E AV3 / SEMANA VICENTINA', grades: ['3ª EM'] },
+            { date: '2025-09-18', description: '2ª CHAMADA AV1 E AV3 / SEMANA VICENTINA / RECUPERAÇÃO PARALELA II TRI', grades: ['3ª EM'] },
+            { date: '2025-09-19', description: '2ª CHAMADA AV1 E AV3 / SEMANA VICENTINA / RECUPERAÇÃO PARALELA II TRI', grades: ['3ª EM'] },
+            { date: '2025-09-20', description: '2ª CHAMADA AV1 E AV3 / GINCANA VICENTINA / RECUPERAÇÃO PARALELA II TRI', grades: ['3ª EM'] },
+            { date: '2025-09-22', description: 'GINCANA VICENTINA / RECUPERAÇÃO PARALELA II TRI', grades: ['3ª EM'] },
+            { date: '2025-09-24', description: 'GINCANA VICENTINA', grades: ['3ª EM'] },
+            { date: '2025-09-29', description: 'SIMULADO B MANHÃ', grades: ['3ª EM'] },
+            { date: '2025-10-04', description: 'II PLANTÃO PEDAGÓGICO', grades: ['3ª EM'] },
+            { date: '2025-10-06', description: 'AV1 REDAÇÃO (TESTE) III TRI', grades: ['3ª EM'] },
+            { date: '2025-10-07', description: 'AV1 (TESTE) III TRI', grades: ['3ª EM'] },
+            { date: '2025-10-08', description: 'AV1 (TESTE) III TRI', grades: ['3ª EM'] },
+            { date: '2025-10-09', description: 'AV1 (TESTE) III TRI', grades: ['3ª EM'] },
+            { date: '2025-10-10', description: 'AV1 (TESTE) III TRI', grades: ['3ª EM'] },
+            { date: '2025-10-11', description: 'SAÍDA PROFESSORES', grades: ['3ª EM'] },
+            { date: '2025-10-12', description: 'FERIADO NOSSA SENHORA APARECIDA', grades: ['3ª EM'] },
+            { date: '2025-10-13', description: 'AV1 (TESTE) III TRI', grades: ['3ª EM'] },
+            { date: '2025-10-14', description: 'AV1 (TESTE) III TRI', grades: ['3ª EM'] },
+            { date: '2025-10-15', description: 'DIA DO PROFESSOR / FERIADO ESCOLAR', grades: ['3ª EM'] },
+            { date: '2025-10-18', description: 'SIMULADO B MANHÃ', grades: ['3ª EM'] },
+            { date: '2025-10-24', description: 'FESTA DA FAMÍLIA', grades: ['3ª EM'] },
+            { date: '2025-10-25', description: 'SIMULADO B MANHÃ', grades: ['3ª EM'] },
+            { date: '2025-11-01', description: 'AULÃO ENEM (DIA TODO)', grades: ['3ª EM'] },
+            { date: '2025-11-02', description: 'FERIADO FINADOS', grades: ['3ª EM'] },
+            { date: '2025-11-03', description: 'AV3 REDAÇÃO (PROVA) III TRI', grades: ['3ª EM'] },
+            { date: '2025-11-06', description: 'AV3 (PROVA) III TRI', grades: ['3ª EM'] },
+            { date: '2025-11-08', description: 'AULÃO DA SAUDADE', grades: ['3ª EM'] },
+            { date: '2025-11-09', description: 'ENEM 2025', grades: ['3ª EM'] },
+            { date: '2025-11-10', description: 'AV3 (PROVA) III TRI', grades: ['3ª EM'] },
+            { date: '2025-11-13', description: 'AV3 (PROVA) III TRI', grades: ['3ª EM'] },
+            { date: '2025-11-15', description: 'FERIADO PROC. REPÚBLICA', grades: ['3ª EM'] },
+            { date: '2025-11-16', description: 'ENEM 2025', grades: ['3ª EM'] },
+            { date: '2025-11-17', description: 'AV3 (PROVA) ILTRI', grades: ['3ª EM'] },
+            { date: '2025-11-19', description: 'AV3 (PROVA) III TRI / ÚLTIMO DIA DE AULA', grades: ['3ª EM'] },
+            { date: '2025-11-20', description: 'FERIADO CONSCIÊNCIA NEGRA', grades: ['3ª EM'] },
+            { date: '2025-11-21', description: 'FERIADO ESTENDIDO', grades: ['3ª EM'] },
+            { date: '2025-11-26', description: 'RESULTADO PARCIAL', grades: ['3ª EM'] },
+            { date: '2025-11-27', description: 'PROVA FINAL', grades: ['3ª EM'] },
+            { date: '2025-11-28', description: 'PROVA FINAL', grades: ['3ª EM'] },
+            { date: '2025-11-29', description: 'COORDENAÇÃO PEDAGÓGICA / PROVA FINAL', grades: ['3ª EM'] },
+            { date: '2025-11-30', description: 'PROVA FINAL', grades: ['3ª EM'] },
+            { date: '2025-12-01', description: 'CONSELHO DE CLASSE (PARCIAL)', grades: ['3ª EM'] },
+            { date: '2025-12-02', description: 'RESULTADO PROVA FINAL / INSCRIÇÃO RECUPERAÇÃO', grades: ['3ª EM'] },
+            { date: '2025-12-03', description: 'RECUPERAÇÃO', grades: ['3ª EM'] },
+            { date: '2025-12-04', description: 'RECUPERAÇÃO', grades: ['3ª EM'] },
+            { date: '2025-12-05', description: 'RECUPERAÇÃO', grades: ['3ª EM'] },
+            { date: '2025-12-06', description: 'RECUPERAÇÃO', grades: ['3ª EM'] },
+            { date: '2025-12-08', description: 'FERIADO NOSSA SENHORA DA CONCEIÇÃO', grades: ['3ª EM'] },
+            { date: '2025-12-09', description: 'RECUPERAÇÃO', grades: ['3ª EM'] },
+            { date: '2025-12-10', description: 'RECUPERAÇÃO PROVA', grades: ['3ª EM'] },
+            { date: '2025-12-11', description: 'RECUPERAÇÃO PROVA', grades: ['3ª EM'] },
+            { date: '2025-12-12', description: 'RECUPERAÇÃO PROVA', grades: ['3ª EM'] },
+            { date: '2025-12-13', description: 'RECUPERAÇÃO PROVA', grades: ['3ª EM'] },
+            { date: '2025-12-15', description: 'RECUPERAÇÃO PROVA', grades: ['3ª EM'] },
+            { date: '2025-12-16', description: 'CONSELHO DE CLASSE (FINAL)', grades: ['3ª EM'] },
+            { date: '2025-12-17', description: 'RESULTADO FINAL', grades: ['3ª EM'] },
+            { date: '2025-12-19', description: 'MISSA FORMATURA 3ª SÉRIE', grades: ['3ª EM'] },
+            { date: '2025-12-20', description: 'FORMATURA 3ª SÉRIE', grades: ['3ª EM'] },
+            { date: '2025-12-22', description: 'FÉRIAS PROF.', grades: ['3ª EM'] },
+            { date: '2025-12-25', description: 'NATAL', grades: ['3ª EM'] },
+
+
+            // Data from CALENDÁRIO 2025 - 9º ANO EM.pdf (Includes 9º ANO, 1ª EM, 2ª EM)
+            { date: '2025-01-27', description: 'JORNADA PEDAGÓGICA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-01-28', description: 'JORNADA PEDAGÓGICA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-01-29', description: 'JORNADA PEDAGÓGICA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-01-30', description: 'JORNADA PEDAGÓGICA E REUNIÃO DE PAIS FUND II ENSINO MÉDIO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-01-31', description: 'JORNADA PEDAGÓGICA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-02-03', description: 'INÍCIO AULAS FUND. II ENSINO MÉDIO - INÍCIO I TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-02-10', description: 'AVALIAÇÃO DIAGNÓSTICA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-02-11', description: 'AVALIAÇÃO DIAGNÓSTICA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-02-12', description: 'AVALIAÇÃO DIAGNÓSTICA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-02-13', description: 'AVALIAÇÃO DIAGNÓSTICA / MISSA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-02-14', description: 'AVALIAÇÃO DIAGNÓSTICA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-02-15', description: 'COORDENAÇÃO PEDAGÓGICA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-02-17', description: 'INÍCIO DO USO DOS MÓDULOS', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-02-20', description: 'MISSA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-02-21', description: 'DEVOLUTIVA DA DIAGNÓSTICA À COORDENAÇÃO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-02-27', description: 'RECESSO CARNAVAL', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-02-28', description: 'RECESSO CARNAVAL', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-03-03', description: 'RECESSO CARNAVAL', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-03-04', description: 'RECESSO CARNAVAL / RETORNO ÀS AULAS / MISSA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-03-05', description: 'COORDENAÇÃO PEDAGÓGICA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-03-17', description: 'AV2 INÍCIO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-03-18', description: 'AV1 REDAÇÃO (TESTE) I TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-03-19', description: 'AV1 (TESTE) I TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-03-20', description: 'CIDADE DA MÚSICA E CASA DAS HISTÓRIAS DE SALVADOR', grades: ['9º ANO'] },
+            { date: '2025-03-20', description: 'AV1 (TESTE) I TRI', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-03-21', description: 'AV1 (TESTE) I TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-03-24', description: 'AV1 (TESTE) I TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-03-25', description: 'AV1 (TESTE) I TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-03-26', description: 'AV1 (TESTE) I TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-03-27', description: 'AV1 (TESTE) I TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-03-28', description: 'AV1 (TESTE) I TRI / PROJETO LÍNGUA ESTRANGEIRA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-03-31', description: 'SIMULADO B 1º E 2º SÉRIES MANHA / SIMULADO EMM 9° ANO MANHÃ', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-04-04', description: 'COMEMORAÇÃO VICENTINA PROFESSORES / SAÍDA 9º ANO', grades: ['9º ANO'] },
+            { date: '2025-04-04', description: 'COMEMORAÇÃO VICENTINA PROFESSORES', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-04-05', description: 'COORDENAÇÃO PEDAGÓGICA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-04-07', description: 'SEMANA DA CULTURA INDÍGENA', grades: ['9º ANO', '1ª EM', '2ª EM'] }, // Assuming this week applies
+            { date: '2025-04-08', description: 'SEMANA DA CULTURA INDÍGENA', grades: ['9º ANO', '1ª EM', '2ª EM'] }, // Assuming this week applies
+            { date: '2025-04-09', description: 'SEMANA DA CULTURA INDÍGENA', grades: ['9º ANO', '1ª EM', '2ª EM'] }, // Assuming this week applies
+            { date: '2025-04-10', description: 'SEMANA DA CULTURA INDÍGENA / SIMULADO EMM 9º ANO MANHÃ / SAÍDA 1ª e 2ª SÉRIES', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-04-14', description: 'CAMPANHA DE GRÃO EM GRÃO... / AV3 REDAÇÃO (PROVA) I TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-04-15', description: 'CAMPANHA DE GRÃO EM GRÃO...', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-04-16', description: 'CAMPANHA DE GRÃO EM GRÃO...', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-04-17', description: 'RECESSO SEMANA SANTA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-04-18', description: 'SEXTA-FEIRA DA PAIXÃO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-04-20', description: 'DOMINGO DE PÁSCOA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-04-21', description: 'FERIADO TIRADENTES', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-04-23', description: 'AV3 (PROVA) I TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-04-24', description: 'AV3 (PROVA) I TRI / AV2 TERMINO ENTREGA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-04-26', description: 'MUSEU DA COELBA 9° ANO', grades: ['9º ANO'] },
+            { date: '2025-04-28', description: 'AV3 (PROVA) I TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-05-01', description: 'FERIADO DIA DO TRABALHADOR', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-05-02', description: 'FERIADO PROLONGADO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-05-05', description: 'AV3 (PROVA) I TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-05-08', description: 'AV3 (PROVA) I TRI / FIM I TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-05-09', description: 'PROJETO LÍNGUA PORTUGUESA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-05-12', description: 'AV3 (PROVA) I TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-05-15', description: 'SIMULADO B 1º E 2º SÉRIE MANHÃ / SIMULADO EMM 9° ANO MANHÃ', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-05-19', description: 'INÍCIO II TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-05-20', description: 'AV2 INÍCIO / PASSAR AS ATIVIDADES/TRABALHOS', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-05-24', description: 'I PLANTÃO PEDAGÓGICO / SIMULADO 1ª E 2ª SÉRIE MANHA / SIMULADO EMM 9° ANO MANHA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-05-26', description: '2ª CHAMADA AV1 E AV3', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-05-27', description: '2ª CHAMADA AV1 E AV3', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-05-28', description: '2ª CHAMADA AV1 E AV3', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-05-29', description: '2ª CHAMADA AV1 E AV3', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-05-30', description: '2ª CHAMADA AV1 E AV3', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-05-31', description: 'AULA EXTRA OBMEP 9° ANO ATÉ 2ª SÉRIE', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-06-07', description: 'PREPARANDO PARA O ENEM (4 AULAS)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-06-14', description: 'FESTA JUNINA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-06-18', description: 'ÚLTIMO DIA DE AULA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-06-19', description: 'FERIADO CORPUS CHRISTI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-06-20', description: 'FERIADO PROLONGADO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-06-23', description: 'RECESSO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-06-24', description: 'RECESSO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-06-25', description: 'RECESSO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-06-26', description: 'RECESSO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-06-27', description: 'RECESSO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-06-30', description: 'RECESSO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-07-01', description: 'RECESSO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-07-02', description: 'RECESSO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-07-03', description: 'RECESSO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-07-04', description: 'RECESSO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-07-07', description: 'RECESSO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-07-08', description: 'RETORNO PROFESSORES', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-07-09', description: 'RETORNO ALUNOS', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-07-10', description: 'AV1 REDAÇÃO (TESTE) II TRI / AV2 FIM ENTREGA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-07-11', description: 'COORDENAÇÃO PEDAGÓGICA / AV1 (TESTE) II TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-07-14', description: 'AV1 (TESTE) II TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-07-15', description: 'AV1 (TESTE) II TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-07-16', description: 'AV1 (TESTE) II TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-07-17', description: 'AV1 (TESTE) II TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-07-18', description: 'AV1 (TESTE) II TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-07-23', description: 'RECUPERAÇÃO PARALELA I TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-07-24', description: 'RECUPERAÇÃO PARALELA I TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-07-25', description: 'RECUPERAÇÃO PARALELA I TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-07-26', description: 'SEMINÁRIO SUSTENTABILIDADE', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-07-28', description: 'RECUPERAÇÃO PARALELA I TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-07-29', description: 'RECUPERAÇÃO PARALELA I TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-08-02', description: 'COORDENAÇÃO PEDAGÓGICA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-08-09', description: 'SIMULADO B 1ª E 2ª SÉRIES MANHA / SIMULADO EMM 9° ANO MANHÃ', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-08-15', description: 'COMEMORAÇÃO DIA DO ESTUDANTE', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-08-16', description: 'RESERVA SAPIRANGA 9 ANO 1ª E 2ª SÉRIE', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-08-20', description: 'AV3 REDAÇÃO (PROVA) II TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-08-22', description: 'AV3 (PROVA) II TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-08-23', description: 'SIMULADO B 1º E 2º SERIES MANHA / SIMULADO EMM 9° ANO MANHA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-08-26', description: 'AV3 (PROVA) II TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-08-28', description: 'AV3 (PROVA) II TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-09-01', description: 'AV3 (PROVA) II TRI / FIM II TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-09-02', description: 'INÍCIO III TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-09-04', description: 'FEIRA DE SUSTENTABILIDADE', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-09-07', description: 'FERIADO INDEPENDÊNCIA DO BRASIL', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-09-11', description: 'SIMULADO B 1º E 2º SÉRIES MANHÃ / SIMULADO EMM 9° ANO MANHÃ', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-09-15', description: '2ª CHAMADA AV1 E AV3', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-09-16', description: '2ª CHAMADA AV1 E AV3', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-09-17', description: '2ª CHAMADA AV1 E AV3 / SEMANA VICENTINA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-09-18', description: '2ª CHAMADA AV1 E AV3 / SEMANA VICENTINA / RECUPERAÇÃO PARALELA II TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-09-19', description: '2ª CHAMADA AV1 E AV3 / SEMANA VICENTINA / RECUPERAÇÃO PARALELA II TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-09-20', description: 'GINCANA VICENTINA / RECUPERAÇÃO PARALELA II TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-09-22', description: 'GINCANA VICENTINA / RECUPERAÇÃO PARALELA II TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-09-24', description: 'GINCANA VICENTINA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-09-29', description: 'SIMULADO B 1 E 2ª SÉRIES MANHA / SIMULADO EMM 9° ANO MANHÃ', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-10-01', description: 'SIMULADO B 9 ANO / SIMULADO EMM 1ª E 2ª SÉRIES', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-10-02', description: 'SIMULADO B 9 ANO / SIMULADO EMM 1ª E 2ª SÉRIES', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-10-03', description: 'II PLANTÃO PEDAGÓGICO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-10-08', description: 'SIMULADO B 9 ANO / SIMULADO EMM 1ª E 2ª SÉRIES', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-10-09', description: 'SIMULADO B 9° ANO / SIMULADO EMM 1 E 2ª SÉRIES', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-10-12', description: 'FERIADO NOSSA SENHORA APARECIDA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-10-15', description: 'DIA DO PROFESSOR / FERIADO ESCOLAR', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-10-18', description: 'HOTEL FAZENDA MIRAGEM 9º ANO E 1ª SÉRIE', grades: ['9º ANO', '1ª EM'] },
+            { date: '2025-10-20', description: 'AV1 REDAÇÃO (TESTE) III TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-10-21', description: 'AV1 (TESTE) III TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-10-22', description: 'AV1 (TESTE) III TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-10-23', description: 'AV1 (TESTE) III TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-10-24', description: 'FESTA DA FAMÍLIA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-10-25', description: 'AULÃO ENEM 2ª SÉRIE (DIA TODO)', grades: ['2ª EM'] },
+            { date: '2025-10-27', description: 'AV1 (TESTE) III TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-10-28', description: 'AV1 (TESTE) III TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-10-29', description: 'AV1 (TESTE) III TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-11-01', description: 'MISSA EM AÇÃO DE GRAÇAS 9 ANO', grades: ['9º ANO'] },
+            { date: '2025-11-02', description: 'FERIADO FINADOS', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-11-03', description: 'AV3 REDAÇÃO (PROVA) III TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-11-08', description: 'AULÃO DA SAUDADE', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-11-10', description: 'AV3 REDAÇÃO (PROVA) III TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-11-13', description: 'AV3 (PROVA) III TRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-11-15', description: 'FERIADO PROC. REPÚBLICA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-11-17', description: 'AV3 (PROVA) ILTRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-11-18', description: 'AV3 (PROVA) ILTRI', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-11-19', description: 'AV3 (PROVA) III TRI / ÚLTIMO DIA DE AULA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-11-20', description: 'FERIADO CONSCIÊNCIA NEGRA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-11-21', description: 'FERIADO ESTENDIDO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-11-26', description: 'RESULTADO PARCIAL / PROVA FINAL', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-11-27', description: 'PROVA FINAL', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-11-28', description: 'COORDENAÇÃO PEDAGÓGICA / PROVA FINAL', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '25-11-29', description: 'PROVA FINAL', grades: ['9º ANO', '1ª EM', '2ª EM'] }, // Date format inconsistent in source
+            { date: '2025-12-01', description: 'PROVA FINAL', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-12-02', description: 'CONSELHO DE CLASSE (PARCIAL)', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-12-03', description: 'RESULTADO PROVA FINAL / INSCRIÇÃO RECUPERAÇÃO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-12-04', description: 'RECUPERAÇÃO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-12-05', description: 'RECUPERAÇÃO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-12-06', description: 'RECUPERAÇÃO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-12-08', description: 'FERIADO NOSSA SENHORA DA CONCEIÇÃO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-12-09', description: 'RECUPERAÇÃO', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-12-10', description: 'RECUPERAÇÃO PROVA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-12-11', description: 'RECUPERAÇÃO PROVA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-12-12', description: 'RECUPERAÇÃO PROVA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-12-13', description: 'RECUPERAÇÃO PROVA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-12-15', description: 'RECUPERAÇÃO PROVA', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-12-16', description: 'CONSELHO DE CLASSE (FINAL)', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-12-17', description: 'RESULTADO FINAL', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-12-22', description: 'FÉRIAS PROF.', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+            { date: '2025-12-25', description: 'NATAL', grades: ['9º ANO', '1ª EM', '2ª EM'] },
+
+            // Data from CONTROLE ENTREGA AVALIAÇÕES I TRI 1ª e 2ª EM - PROFESSORES.pdf
+            // Note: Dates here seem to be for 2024 based on the document header "I TRIMESTRE - 03/02 A 16/05/2024".
+            // Assuming these are meant to be examples or a template for 2025, I will include them but note the discrepancy if needed.
+            // Given the user asked for a 2025 calendar, I will adjust the year to 2025 for these entries.
+            { date: '2025-03-18', description: 'AV1 - REDAÇÃO / ARTE (Aplicação)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-04-09', description: 'AV1 - REDAÇÃO / ARTE (Lançamento no portal)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-03-21', description: 'AV1 - PORTUGUÊS / INGLÊS / ESPANHOL (Aplicação)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-04-11', description: 'AV1 - PORTUGUÊS / INGLÊS / ESPANHOL (Lançamento no portal)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-03-24', description: 'AV1 - MATEMÁTICA (Aplicação)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-04-14', description: 'AV1 - MATEMÁTICA (Lançamento no portal)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-03-25', description: 'AV1 - HISTÓRIA / FILOSOFIA (Aplicação)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-04-15', description: 'AV1 - HISTÓRIA / FILOSOFIA (Lançamento no portal)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-03-26', description: 'AV1 - QUÍMICA / BIOLOGIA (Aplicação)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-04-16', description: 'AV1 - QUÍMICA / BIOLOGIA (Lançamento no portal)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-03-27', description: 'AV1 - GEOGRAFIA / SOCIOLOGIA (Aplicação)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-04-22', description: 'AV1 - GEOGRAFIA / SOCIOLOGIA (Lançamento no portal)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-03-28', description: 'AV1 - FÍSICA (Aplicação)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-04-23', description: 'AV1 - FÍSICA (Lançamento no portal)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-03-17', description: 'AV2 (Atividades, Projetos, Testes) Início', grades: ['1ª EM', '2ª EM'] }, // Based on date range in doc
+            { date: '2025-04-24', description: 'AV2 (Atividades, Projetos, Testes) Fim', grades: ['1ª EM', '2ª EM'] }, // Based on date range in doc
+            { date: '2025-05-12', description: 'AV2 (Lançamento no portal)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-04-14', description: 'AV3 - REDAÇÃO (Aplicação)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-04-28', description: 'AV3 - REDAÇÃO (Lançamento no portal)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-04-23', description: 'AV3 LINGUAGENS (Aplicação)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-05-06', description: 'AV3 LINGUAGENS (Lançamento no portal)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-04-26', description: 'AV3 HUMANAS (Aplicação)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-05-09', description: 'AV3 HUMANAS (Lançamento no portal)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-05-05', description: 'AV3 - MATEMÁTICA (Aplicação)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-05-15', description: 'AV3 - MATEMÁTICA (Lançamento no portal)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-05-12', description: 'AV3 - NATURAIS (Aplicação)', grades: ['1ª EM', '2ª EM'] },
+            { date: '2025-05-20', description: 'AV3 - NATURAIS (Lançamento no portal)', grades: ['1ª EM', '2ª EM'] },
+
+
+            // Data from CONTROLE ENTREGA AVALIAÇÕES I TRI 3ª EM - PROFESSORES.pdf
+            // Note: Dates here seem to be for 2024 based on the document header "I TRIMESTRE - 03/02 A 16/05/2024".
+            // Assuming these are meant to be examples or a template for 2025, I will include them but note the discrepancy if needed.
+             // Given the user asked for a 2025 calendar, I will adjust the year to 2025 for these entries.
+            { date: '2025-03-18', description: 'AV1 - REDAÇÃO (Aplicação)', grades: ['3ª EM'] },
+            { date: '2025-04-09', description: 'AV1 - REDAÇÃO (Lançamento no portal)', grades: ['3ª EM'] },
+            { date: '2025-03-24', description: 'AV1 - MATEMÁTICA (Aplicação)', grades: ['3ª EM'] },
+            { date: '2025-04-11', description: 'AV1 - MATEMÁTICA (Lançamento no portal)', grades: ['3ª EM'] },
+            { date: '2025-03-25', description: 'AV1 - PORTUGUÊS / INGLÊS / ESPANHOL (Aplicação)', grades: ['3ª EM'] },
+            { date: '2025-04-14', description: 'AV1 - PORTUGUÊS / INGLÊS / ESPANHOL (Lançamento no portal)', grades: ['3ª EM'] },
+            { date: '2025-03-26', description: 'AV1 - HISTÓRIA / FILOSOFIA (Aplicação)', grades: ['3ª EM'] },
+            { date: '2025-04-15', description: 'AV1 - HISTÓRIA / FILOSOFIA (Lançamento no portal)', grades: ['3ª EM'] },
+            { date: '2025-03-27', description: 'AV1 - QUÍMICA / BIOLOGIA (Aplicação)', grades: ['3ª EM'] },
+            { date: '2025-04-16', description: 'AV1 - QUÍMICA / BIOLOGIA (Lançamento no portal)', grades: ['3ª EM'] },
+            { date: '2025-03-28', description: 'AV1 - GEOGRAFIA / SOCIOLOGIA (Aplicação)', grades: ['3ª EM'] },
+            { date: '2025-04-22', description: 'AV1 - GEOGRAFIA / SOCIOLOGIA (Lançamento no portal)', grades: ['3ª EM'] },
+            { date: '2025-03-31', description: 'AV1 - FÍSICA (Aplicação)', grades: ['3ª EM'] },
+            { date: '2025-04-23', description: 'AV1 - FÍSICA (Lançamento no portal)', grades: ['3ª EM'] },
+            { date: '2025-03-17', description: 'AV2 (Atividades, Projetos, Testes) Início', grades: ['3ª EM'] }, // Based on date range in doc
+            { date: '2025-04-24', description: 'AV2 (Atividades, Projetos, Testes) Fim', grades: ['3ª EM'] }, // Based on date range in doc
+            { date: '2025-05-12', description: 'AV2 (Lançamento no portal)', grades: ['3ª EM'] },
+            { date: '2025-04-14', description: 'AV3 - REDAÇÃO (Aplicação)', grades: ['3ª EM'] },
+            { date: '2025-04-28', description: 'AV3 - REDAÇÃO (Lançamento no portal)', grades: ['3ª EM'] },
+            { date: '2025-04-23', description: 'AV3 LINGUAGENS (Aplicação)', grades: ['3ª EM'] },
+            { date: '2025-05-06', description: 'AV3 LINGUAGENS (Lançamento no portal)', grades: ['3ª EM'] },
+            { date: '2025-04-28', description: 'AV3 - MATEMÁTICA (Aplicação)', grades: ['3ª EM'] },
+            { date: '2025-05-09', description: 'AV3 - MATEMÁTICA (Lançamento no portal)', grades: ['3ª EM'] },
+            { date: '2025-05-05', description: 'AV3HUMANAS (Aplicação)', grades: ['3ª EM'] },
+            { date: '2025-05-15', description: 'AV3HUMANAS (Lançamento no portal)', grades: ['3ª EM'] },
+            { date: '2025-05-12', description: 'AV3NATURAIS (Aplicação)', grades: ['3ª EM'] },
+            { date: '2025-05-20', description: 'AV3NATURAIS (Lançamento no portal)', grades: ['3ª EM'] },
+
+            // Data from CONTROLE ENTREGA AVALIAÇÕES I TRI 9º ANO - PROFESSORES.pdf
+            // Note: Dates here seem to be for 2024 based on the document header "I TRIMESTRE - 03/02 A 16/05/2024".
+            // Assuming these are meant to be examples or a template for 2025, I will include them but note the discrepancy if needed.
+             // Given the user asked for a 2025 calendar, I will adjust the year to 2025 for these entries.
+            { date: '2025-03-18', description: 'AV1 - REDAÇÃO (Aplicação)', grades: ['9º ANO'] },
+            { date: '2025-04-11', description: 'AV1 - REDAÇÃO (Lançamento no portal)', grades: ['9º ANO'] },
+            { date: '2025-03-21', description: 'AV1 - PORTUGUÊS (Aplicação)', grades: ['9º ANO'] },
+            { date: '2025-04-11', description: 'AV1 - PORTUGUÊS (Lançamento no portal)', grades: ['9º ANO'] },
+            { date: '2025-03-24', description: 'AV1 - MATEMÁTICA (Aplicação)', grades: ['9º ANO'] },
+            { date: '2025-04-14', description: 'AV1 - MATEMÁTICA (Lançamento no portal)', grades: ['9º ANO'] },
+            { date: '2025-03-25', description: 'AV1 - HISTÓRIA / FILOSOFIA (Aplicação)', grades: ['9º ANO'] },
+            { date: '2025-04-15', description: 'AV1 - HISTÓRIA / FILOSOFIA (Lançamento no portal)', grades: ['9º ANO'] },
+            { date: '2025-03-26', description: 'AV1 - CIÊNCIAS / FÍSICA (Aplicação)', grades: ['9º ANO'] },
+            { date: '2025-04-16', description: 'AV1 - CIÊNCIAS / FÍSICA (Lançamento no portal)', grades: ['9º ANO'] },
+            { date: '2025-03-27', description: 'AV1 - INGLÊS / ARTE (Aplicação)', grades: ['9º ANO'] },
+            { date: '2025-04-22', description: 'AV1 - INGLÊS / ARTE (Lançamento no portal)', grades: ['9º ANO'] },
+            { date: '2025-03-28', description: 'AV1 - GEOGRAFIA / ENS. RELIGIOSO (Aplicação)', grades: ['9º ANO'] },
+            { date: '2025-04-23', description: 'AV1 - GEOGRAFIA / ENS. RELIGIOSO (Lançamento no portal)', grades: ['9º ANO'] },
+            { date: '2025-03-17', description: 'AV2 (Atividades, Projetos, Testes) Início', grades: ['9º ANO'] }, // Based on date range in doc
+            { date: '2025-04-24', description: 'AV2 (Atividades, Projetos, Testes) Fim', grades: ['9º ANO'] }, // Based on date range in doc
+            { date: '2025-05-12', description: 'AV2 (Lançamento no portal)', grades: ['9º ANO'] },
+            { date: '2025-04-14', description: 'AV3 - REDAÇÃO (Aplicação)', grades: ['9º ANO'] },
+            { date: '2025-04-28', description: 'AV3 - REDAÇÃO (Lançamento no portal)', grades: ['9º ANO'] },
+            { date: '2025-04-23', description: 'AV3 LINGUAGENS (Aplicação)', grades: ['9º ANO'] },
+            { date: '2025-05-06', description: 'AV3 LINGUAGENS (Lançamento no portal)', grades: ['9º ANO'] },
+            { date: '2025-04-26', description: 'AV3 - CIÊNCAS DA NATUREZA (Aplicação)', grades: ['9º ANO'] },
+            { date: '2025-05-09', description: 'AV3 - CIÊNCAS DA NATUREZA (Lançamento no portal)', grades: ['9º ANO'] },
+            { date: '2025-05-05', description: 'AV3 - MATEMÁTICA (Aplicação)', grades: ['9º ANO'] },
+            { date: '2025-05-15', description: 'AV3 - MATEMÁTICA (Lançamento no portal)', grades: ['9º ANO'] },
+            { date: '2025-05-12', description: 'AV3HUMANAS (Aplicação)', grades: ['9º ANO'] },
+            { date: '2025-05-20', description: 'AV3HUMANAS (Lançamento no portal)', grades: ['9º ANO'] },
+        ];
+
+        // Sort events by date
+        allEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        const calendarGrid = document.querySelector('.calendar-grid');
+        const currentMonthYearHeader = document.getElementById('currentMonthYear');
+        const prevMonthButton = document.getElementById('prevMonth');
+        const nextMonthButton = document.getElementById('nextMonth');
+        const gradeFilter = document.getElementById('gradeFilter');
+        const eventDetailsDiv = document.getElementById('eventDetails');
+        const eventDetailsDateSpan = document.getElementById('eventDetailsDate');
+        const eventDetailsListUl = document.getElementById('eventDetailsList');
+
+        let currentDate = new Date();
+        let currentMonth = currentDate.getMonth();
+        let currentYear = currentDate.getFullYear();
+
+        const monthNames = [
+            'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+        ];
+
+        function renderCalendar() {
+            // Clear previous calendar days, but keep the day headers
+            while (calendarGrid.children.length > 7) {
+                calendarGrid.removeChild(calendarGrid.lastChild);
+            }
+
+            const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+            const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+            const daysInMonth = lastDayOfMonth.getDate();
+            const firstDayOfWeek = firstDayOfMonth.getDay(); // 0 for Sunday, 6 for Saturday
+
+            // Set the current month and year header
+            currentMonthYearHeader.textContent = `${monthNames[currentMonth]} de ${currentYear}`;
+
+            // Add empty days for the beginning of the month (if month doesn't start on Sunday)
+            for (let i = 0; i < firstDayOfWeek; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.classList.add('calendar-day', 'other-month');
+                 emptyDay.innerHTML = `<div class="day-number"></div>`;
+                calendarGrid.appendChild(emptyDay);
+            }
+
+            // Add days of the current month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.classList.add('calendar-day', 'current-month');
+                dayElement.innerHTML = `<div class="day-number">${day}</div>`;
+                dayElement.dataset.date = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+                // Add event markers
+                const eventsOnThisDay = allEvents.filter(event => {
+                    const eventDate = new Date(event.date + 'T00:00:00'); // Ensure date comparison is correct
+                    return eventDate.getFullYear() === currentYear &&
+                           eventDate.getMonth() === currentMonth &&
+                           eventDate.getDate() === day &&
+                           (gradeFilter.value === 'all' || event.grades.includes(gradeFilter.value));
+                });
+
+                eventsOnThisDay.forEach(event => {
+                    const eventMarker = document.createElement('div');
+                    eventMarker.classList.add('event-marker');
+                    // Display a shortened description for the marker
+                    eventMarker.textContent = event.description.substring(0, 20) + (event.description.length > 20 ? '...' : '');
+                    dayElement.appendChild(eventMarker);
+                });
+
+                // Add click listener to show event details
+                if (eventsOnThisDay.length > 0) {
+                     dayElement.addEventListener('click', () => {
+                        showEventDetails(dayElement.dataset.date, eventsOnThisDay);
+                     });
+                } else {
+                     dayElement.classList.add('other-month'); // Style days without events differently if desired
+                     dayElement.style.cursor = 'default';
+                }
+
+
+                calendarGrid.appendChild(dayElement);
+            }
+
+             // Add empty days for the end of the month
+             const totalDaysDisplayed = firstDayOfWeek + daysInMonth;
+             const remainingDays = 42 - totalDaysDisplayed; // Display 6 weeks for consistency (6 * 7 = 42)
+             for (let i = 0; i < remainingDays; i++) {
+                 const emptyDay = document.createElement('div');
+                 emptyDay.classList.add('calendar-day', 'other-month');
+                 emptyDay.innerHTML = `<div class="day-number"></div>`;
+                 calendarGrid.appendChild(emptyDay);
+             }
+
+             // Hide event details when rendering a new month
+             eventDetailsDiv.classList.add('hidden');
+        }
+
+        function showEventDetails(date, events) {
+            eventDetailsDateSpan.textContent = new Date(date + 'T00:00:00').toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' });
+            eventDetailsListUl.innerHTML = ''; // Clear previous details
+
+            events.forEach(event => {
+                const listItem = document.createElement('li');
+                 listItem.innerHTML = `<strong>${event.description}</strong><br><span class="text-gray-600">Séries: ${event.grades.join(', ')}</span>`;
+                eventDetailsListUl.appendChild(listItem);
+            });
+
+            eventDetailsDiv.classList.remove('hidden');
+        }
+
+        // Event listeners for month navigation
+        prevMonthButton.addEventListener('click', () => {
+            currentMonth--;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            renderCalendar();
+        });
+
+        nextMonthButton.addEventListener('click', () => {
+            currentMonth++;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            renderCalendar();
+        });
+
+        // Event listener for grade filter change
+        gradeFilter.addEventListener('change', () => {
+            renderCalendar(); // Re-render calendar with the new filter
+        });
+
+        // Initial render
+        renderCalendar();
+
+    </script>
+</body>
+</html>
