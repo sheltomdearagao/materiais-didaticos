@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Conectivos por Função</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; color: #333; }
+    h1, h2 { color: #00695c; }
+    table { width: 100%; border-collapse: collapse; background-color: white; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-bottom: 40px; }
+    th, td { border: 1px solid #ddd; padding: 10px; vertical-align: top; }
+    th { background-color: #009688; color: white; text-align: left; }
+    .conectivo, .arg-conectivo, .inter-conectivo { display: inline-block; background-color: #e0f7fa; margin: 3px; padding: 5px 10px; border-radius: 12px; cursor: pointer; transition: 0.2s; }
+    .conectivo:hover, .arg-conectivo:hover, .inter-conectivo:hover { background-color: #b2ebf2; }
+    .ativo { background-color: #ffca28 !important; color: #000; font-weight: bold; }
+    details { background: white; padding: 10px; margin-bottom: 15px; border-radius: 6px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+    details > summary { font-size: 16px; font-weight: bold; color: #00796b; cursor: pointer; }
+    #writing-space { width: 100%; min-height: 150px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; resize: vertical; box-shadow: inset 0 0 5px rgba(0,0,0,0.05); }
+  </style>
+</head>
+<body>
+
+  <details open>
+    <summary><h1>Conectivos por Função</h1></summary>
+    <table>
+      <thead>
+        <tr><th>Função</th><th>Conectivos</th></tr>
+      </thead>
+      <tbody id="tabela-conectivos"></tbody>
+    </table>
+  </details>
+
+  <section id="intraparagrafos">
+    <h2>Operadores Argumentativos INTRAparágrafos</h2>
+    <details open>
+      <summary>Oposição / Contraste</summary>
+      <div id="oposicao"></div>
+    </details>
+    <details open>
+      <summary>Adição / Reforço</summary>
+      <div id="adicao"></div>
+    </details>
+    <details open>
+      <summary>Causa / Consequência</summary>
+      <div id="causa"></div>
+    </details>
+    <details open>
+      <summary>Conclusão / Síntese</summary>
+      <div id="conclusao"></div>
+    </details>
+    <details open>
+      <summary>Exemplificação</summary>
+      <div id="exemplificacao"></div>
+    </details>
+  </section>
+
+  <section id="interparagrafos">
+    <h2>Operadores Argumentativos INTERparágrafos</h2>
+    <details>
+      <summary>Desenvolvimento 1</summary>
+      <div id="desenv1"></div>
+    </details>
+    <details>
+      <summary>Desenvolvimento 2</summary>
+      <div id="desenv2"></div>
+    </details>
+    <details>
+      <summary>Conclusão</summary>
+      <div id="conclusao2"></div>
+    </details>
+  </section>
+
+  <section>
+    <h2>Espaço para Escrita</h2>
+    <textarea id="writing-space" placeholder="Escreva aqui seu parágrafo usando conectivos argumentativos..."></textarea>
+  </section>
+
+  <script>
+    // Dados básicos completos
+    const dados = {
+      "Adição": ["ainda", "adicionalmente", "além disso", "ademais", "bem como", "e", "nem", "não só…mas também", "não apenas", "não somente", "como", "do mesmo modo", "depois", "finalmente", "em seguida", "também"],
+      "Afirmação": ["certamente", "decerto", "evidentemente", "é evidente", "indubitavelmente", "por certo", "realmente", "seguramente", "sem dúvida"],
+      "Alternância": ["em alternativa", "ou…ou", "ora…ora", "não…nem", "seja…seja", "quer…quer"],
+      "Causa ou consequência": ["devido a", "dado que", "em virtude de", "portanto", "visto que", "pois", "já que", "porque", "graças a", "uma vez que", "por consequência", "posto que"],
+      "Comparação": ["assim como", "como", "da mesma maneira", "da mesma forma", "similarmente", "mais que", "menos que", "que nem", "tão…quanto", "tão…como", "tanto…quanto", "tal qual"],
+      "Concessão": ["apesar de", "ainda que", "ainda assim", "embora", "mesmo que", "por mais que", "se bem que"],
+      "Conformidade": ["assim", "também", "conforme", "segundo", "consoante", "como", "de acordo com", "igualmente", "sob o mesmo ponto de vista"],
+      "Conclusão": ["assim", "então", "por conseguinte", "pois", "por isso", "enfim", "em conclusão", "em suma", "logo", "portanto"],
+      "Condição": ["a não ser que", "ao menos que", "caso", "eventualmente", "contanto que", "se", "salvo se"],
+      "Dúvida": ["é provável que", "provavelmente", "quiçá", "porventura", "possivelmente", "quem sabe", "se é que", "talvez"],
+      "Exemplificação": ["em outras palavras", "exemplificando", "isto é", "por exemplo", "tal como"],
+      "Finalidade": ["para que", "a fim de que", "com a finalidade de", "ao propósito", "com o fim de"],
+      "Negação": ["jamais", "de jeito nenhum", "não", "nunca", "tampouco", "em hipótese alguma"],
+      "Proporção": ["à proporção que", "à medida que", "ao passo que", "quanto mais", "quanto menos", "tanto mais", "tanto menos"],
+      "Reformulação": ["dito de outro modo", "em outras palavras", "mais precisamente", "melhor dizendo", "ou melhor", "em outros termos"],
+      "Resumo": ["em resumo", "em síntese", "em suma"],
+      "Sequência": ["antes de", "concluindo", "em segundo lugar", "em seguida", "em síntese", "em primeiro lugar", "primeiramente", "depois de", "para terminar", "finalizando"],
+      "Oposição": ["apesar de que", "contudo", "entretanto", "embora", "em vez de", "mas", "porém", "todavia", "no entanto", "senão", "mesmo que", "não obstante", "pelo contrário", "por outro lado"]
+    };
+    // Preenche tabela principal
+    const tabela = document.getElementById("tabela-conectivos");
+    for (let func in dados) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${func}</td><td>${dados[func].map(c => `<span class=\"conectivo\">${c}</span>`).join('')}</td>`;
+      tabela.appendChild(tr);
+    }
+    // Dados INTRAparágrafos
+    const intra = {
+      oposicao: ["porém","contudo","todavia","no entanto","entretanto","embora","apesar de","ainda que"],
+      adicao: ["ademais","além disso","outrossim","também","igualmente","adicionalmente"],
+      causa: ["logo","portanto","assim","dessa forma","consequentemente","por conseguinte","devido a","em virtude de","como resultado"],
+      conclusao: ["portanto","logo","assim","por conseguinte","consequentemente","em suma","em resumo","em síntese"],
+      exemplificacao: ["por exemplo","como","tal como","assim como"]
+    };
+    for (let cat in intra) {
+      const container = document.getElementById(cat);
+      intra[cat].forEach(c => {
+        const span = document.createElement('span');
+        span.className = 'arg-conectivo';
+        span.textContent = c;
+        span.onclick = () => span.classList.toggle('ativo');
+        container.appendChild(span);
+      });
+    }
+    // Dados INTERparágrafos
+    const inter = {
+      desenv1: ["Diante desse cenário","Acerca da lógica referente ao/à (tema)","Nessa perspectiva (o tema citado)","Nesse contexto"],
+      desenv2: ["Outrossim","Ademais","Em segunda análise","Em segundo plano","Paralelamente","Por conseguinte","Consequentemente","Além disso","Por outro lado","Porém","Entretanto","Contudo","Todavia","No entanto"],
+      conclusao2: ["Portanto","Em suma","Logo","Destarte","Dessa maneira","Desse modo","Por fim","Mediante os fatos expostos"]
+    };
+    for (let cat in inter) {
+      const container = document.getElementById(cat);
+      inter[cat].forEach(c => {
+        const span = document.createElement('span');
+        span.className = 'inter-conectivo';
+        span.textContent = c;
+        span.onclick = () => span.classList.toggle('ativo');
+        container.appendChild(span);
+      });
+    }
+  </script>
+
+</body>
+</html>
