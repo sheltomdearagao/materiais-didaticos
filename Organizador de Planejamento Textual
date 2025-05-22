@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organizador de Planejamento</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+            min-height: 600px;
+        }
+
+        .bank-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            height: fit-content;
+        }
+
+        .planning-section {
+            background: #ffffff;
+            border: 2px dashed #dee2e6;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .section-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category {
+            margin-bottom: 25px;
+        }
+
+        .category-header {
+            background: #495057;
+            color: white;
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+        .category-header:hover {
+            background: #343a40;
+        }
+
+        .category-content {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-top: none;
+            padding: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .category-content.collapsed {
+            display: none;
+        }
+
+        .element {
+            background: #ffffff;
+            border: 2px solid;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: grab;
+            transition: all 0.3s;
+            font-size: 0.9em;
+            line-height: 1.3;
+            text-align: center;
+        }
+
+        .element:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .element:active {
+            cursor: grabbing;
+        }
+
+        .element.tese {
+            border-color: #e74c3c;
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe6e6 100%);
+        }
+
+        .element.argumento {
+            border-color: #3498db;
+            background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+        }
+
+        .element.desenvolvimento {
+            border-color: #f39c12;
+            background: linear-gradient(135deg, #fffbf0 0%, #fff3e0 100%);
+        }
+
+        .element.agente {
+            border-color: #27ae60;
+            background: linear-gradient(135deg, #f0fff4 0%, #e6ffe6 100%);
+        }
+
+        .element.acao {
+            border-color: #9b59b6;
+            background: linear-gradient(135deg, #faf0ff 0%, #f3e6ff 100%);
+        }
+
+        .element.modo {
+            border-color: #1abc9c;
+            background: linear-gradient(135deg, #f0fffc 0%, #e6fff9 100%);
+        }
+
+        .element.finalidade {
+            border-color: #e67e22;
+            background: linear-gradient(135deg, #fff8f0 0%, #ffede0 100%);
+        }
+
+        .drop-zone {
+            border: 2px dashed #bdc3c7;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+
+        .drop-zone.drag-over {
+            border-color: #3498db;
+            background: #e3f2fd;
+            transform: scale(1.02);
+        }
+
+        .drop-zone.filled {
+            background: #ffffff;
+            border-style: solid;
+        }
+
+        .drop-zone-label {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 10px;
+        }
+
+        .placeholder {
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .desenvolvimento-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .proposta-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .clear-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+
+        .clear-btn:hover {
+            background: #c0392b;
+        }
+
+        .footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            font-size: 0.9em;
+        }
+
+        .theme-input-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .theme-input-container label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        #theme-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            font-size: 1em;
+            background: rgba(255, 255, 255, 0.9);
+            color: #2c3e50;
+            transition: all 0.3s;
+        }
+
+        #theme-input:focus {
+            outline: none;
+            border-color: #3498db;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        #generate-btn {
+            padding: 12px 20px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        #generate-btn:hover {
+            background: #229954;
+            transform: translateY(-1px);
+        }
+
+        #generate-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .theme-info {
+            text-align: center;
+            opacity: 0.9;
+        }
+
+        .loading {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: loading 1.5s infinite;
+        }
+
+        .dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+        }
+
+        .element.placed {
+            opacity: 1 !important;
+            transform: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .proposta-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .desenvolvimento-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Organizador de Planejamento</h1>
+            <p>Desafios para a valorização do trabalho dos catadores de materiais recicláveis</p>
+            
+            <div class="theme-input-container">
+                <label for="theme-input">✍️ Digite sua frase temática:</label>
+                <div class="input-group">
+                    <input type="text" id="theme-input" placeholder="Ex: Desafios para combater a violência contra a mulher no Brasil" />
+                    <button id="generate-btn" onclick="generateElements()">🔄 Gerar Elementos</button>
+                </div>
+                <div class="theme-info">
+                    <small>💡 Dica: Digite um tema de redação ENEM para gerar elementos personalizados</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Banco de Elementos -->
+            <div class="bank-section">
+                <div class="section-title">
+                    📚 Banco de Elementos
+                </div>
+
+                <!-- Teses -->
+                <div class="category">
+                    <div class="category-header" onclick="toggleCategory('teses')">
+                        <span>🎯 Teses</span>
+                        <span id="teses-toggle">▼</span>
+                    </div>
+                    <div class="category-content" id="teses-content">
+                        <div class="element tese" draggable="true">A negligência estatal e a invisibilidade social dificultam o reconhecimento dos catadores</div>
+                        <div class="element tese" draggable="true">A valorização dos catadores esbarra na precariedade das políticas públicas</div>
+                        <div class="element tese" draggable="true">A sociedade brasileira desconsidera a contribuição socioambiental dos catadores</div>
+                        <div class="element tese" draggable="true">O preconceito social leva ao descaso estatal em relação aos catadores</div>
+                        <div class="element tese" draggable="true">A falta de infraestrutura adequada impede a valorização do trabalho dos catadores</div>
+                        <div class="element tese" draggable="true">A ausência de marcos regulatórios específicos prejudica os catadores</div>
+                        <div class="element tese" draggable="true">A competição desleal com empresas privadas desvaloriza o trabalho dos catadores</div>
+                        <div class="element tese" draggable="true">A falta de educação ambiental da população dificulta o trabalho dos catadores</div>
+                    </div>
+                </div>
+
+                <!-- Argumentos -->
+                <div class="category">
+                    <div class="category-header" onclick="toggleCategory('argumentos')">
+                        <span>💡 Argumentos</span>
+                        <span id="argumentos-toggle">▼</span>
+                    </div>
+                    <div class="category-content" id="argumentos-content">
+                        <div class="element argumento" draggable="true">Invisibilidade e preconceito social</div>
+                        <div class="element argumento" draggable="true">Falta de políticas públicas ativas</div>
+                        <div class="element argumento" draggable="true">Relevância ambiental subestimada</div>
+                        <div class="element argumento" draggable="true">Condições precárias de trabalho</div>
+                        <div class="element argumento" draggable="true">Baixa remuneração e instabilidade financeira</div>
+                        <div class="element argumento" draggable="true">Ausência de direitos trabalhistas</div>
+                        <div class="element argumento" draggable="true">Falta de equipamentos e EPIs adequados</div>
+                        <div class="element argumento" draggable="true">Dificuldades na formalização do trabalho</div>
+                        <div class="element argumento" draggable="true">Competição com empresas privadas</div>
+                        <div class="element argumento" draggable="true">Falta de capacitação técnica</div>
+                        <div class="element argumento" draggable="true">Problemas de saúde ocupacional</div>
+                        <div class="element argumento" draggable="true">Exclusão digital e tecnológica</div>
+                        <div class="element argumento" draggable="true">Impacto da pandemia no trabalho</div>
+                        <div class="element argumento" draggable="true">Desorganização das cooperativas</div>
+                        <div class="element argumento" draggable="true">Falta de apoio governamental</div>
+                        <div class="element argumento" draggable="true">Estigma associado ao trabalho com lixo</div>
+                        <div class="element argumento" draggable="true">Ausência de programas de inclusão social</div>
+                        <div class="element argumento" draggable="true">Dificuldades no acesso ao crédito</div>
+                        <div class="element argumento" draggable="true">Falta de integração com coleta seletiva oficial</div>
+                        <div class="element argumento" draggable="true">Inadequação da legislação trabalhista</div>
+                    </div>
+                </div>
+
+                <!-- Tipos de Desenvolvimento -->
+                <div class="category">
+                    <div class="category-header" onclick="toggleCategory('desenvolvimento')">
+                        <span>📊 Tipos de Desenvolvimento</span>
+                        <span id="desenvolvimento-toggle">▼</span>
+                    </div>
+                    <div class="category-content" id="desenvolvimento-content">
+                        <div class="element desenvolvimento" draggable="true">Exemplificação</div>
+                        <div class="element desenvolvimento" draggable="true">Dados estatísticos</div>
+                        <div class="element desenvolvimento" draggable="true">Citação de especialista</div>
+                        <div class="element desenvolvimento" draggable="true">Comparação internacional</div>
+                        <div class="element desenvolvimento" draggable="true">Alusão histórica</div>
+                        <div class="element desenvolvimento" draggable="true">Causa e consequência</div>
+                        <div class="element desenvolvimento" draggable="true">Analogia</div>
+                        <div class="element desenvolvimento" draggable="true">Contraposição</div>
+                        <div class="element desenvolvimento" draggable="true">Descrição detalhada</div>
+                        <div class="element desenvolvimento" draggable="true">Referência cultural</div>
+                    </div>
+                </div>
+
+                <!-- Elementos da Proposta -->
+                <div class="category">
+                    <div class="category-header" onclick="toggleCategory('agentes')">
+                        <span>👥 Agentes</span>
+                        <span id="agentes-toggle">▼</span>
+                    </div>
+                    <div class="category-content" id="agentes-content">
+                        <div class="element agente" draggable="true">Governo Federal</div>
+                        <div class="element agente" draggable="true">Governos Estaduais</div>
+                        <div class="element agente" draggable="true">Prefeituras Municipais</div>
+                        <div class="element agente" draggable="true">Ministério do Meio Ambiente</div>
+                        <div class="element agente" draggable="true">Ministério da Educação</div>
+                        <div class="element agente" draggable="true">Empresas privadas</div>
+                        <div class="element agente" draggable="true">ONGs ambientais</div>
+                        <div class="element agente" draggable="true">Universidades</div>
+                        <div class="element agente" draggable="true">Cooperativas</div>
+                        <div class="element agente" draggable="true">Mídia</div>
+                    </div>
+                </div>
+
+                <div class="category">
+                    <div class="category-header" onclick="toggleCategory('acoes')">
+                        <span>⚡ Ações</span>
+                        <span id="acoes-toggle">▼</span>
+                    </div>
+                    <div class="category-content" id="acoes-content">
+                        <div class="element acao" draggable="true">Criar programas de incentivo</div>
+                        <div class="element acao" draggable="true">Implementar políticas públicas</div>
+                        <div class="element acao" draggable="true">Capacitar profissionalmente</div>
+                        <div class="element acao" draggable="true">Fiscalizar condições de trabalho</div>
+                        <div class="element acao" draggable="true">Promover campanhas educativas</div>
+                        <div class="element acao" draggable="true">Fornecer equipamentos</div>
+                        <div class="element acao" draggable="true">Estabelecer parcerias</div>
+                        <div class="element acao" draggable="true">Criar marcos regulatórios</div>
+                        <div class="element acao" draggable="true">Desenvolver tecnologias</div>
+                        <div class="element acao" draggable="true">Oferecer microcrédito</div>
+                    </div>
+                </div>
+
+                <div class="category">
+                    <div class="category-header" onclick="toggleCategory('modos')">
+                        <span>🔧 Modos/Meios</span>
+                        <span id="modos-toggle">▼</span>
+                    </div>
+                    <div class="category-content" id="modos-content">
+                        <div class="element modo" draggable="true">Por meio de legislação específica</div>
+                        <div class="element modo" draggable="true">Através de campanhas publicitárias</div>
+                        <div class="element modo" draggable="true">Via parcerias público-privadas</div>
+                        <div class="element modo" draggable="true">Mediante investimentos direcionados</div>
+                        <div class="element modo" draggable="true">Por meio de cursos e treinamentos</div>
+                        <div class="element modo" draggable="true">Através de programas sociais</div>
+                        <div class="element modo" draggable="true">Via convênios institucionais</div>
+                        <div class="element modo" draggable="true">Mediante fiscalização rigorosa</div>
+                        <div class="element modo" draggable="true">Por meio de tecnologias digitais</div>
+                        <div class="element modo" draggable="true">Através de editais públicos</div>
+                    </div>
+                </div>
+
+                <div class="category">
+                    <div class="category-header" onclick="toggleCategory('finalidades')">
+                        <span>🎯 Finalidades</span>
+                        <span id="finalidades-toggle">▼</span>
+                    </div>
+                    <div class="category-content" id="finalidades-content">
+                        <div class="element finalidade" draggable="true">Para valorizar o trabalho dos catadores</div>
+                        <div class="element finalidade" draggable="true">A fim de incluir socialmente os catadores</div>
+                        <div class="element finalidade" draggable="true">Com o objetivo de proteger os trabalhadores</div>
+                        <div class="element finalidade" draggable="true">Para conscientizar a população</div>
+                        <div class="element finalidade" draggable="true">A fim de formalizar a atividade</div>
+                        <div class="element finalidade" draggable="true">Com o intuito de melhorar condições de trabalho</div>
+                        <div class="element finalidade" draggable="true">Para promover sustentabilidade ambiental</div>
+                        <div class="element finalidade" draggable="true">A fim de reduzir desigualdades sociais</div>
+                        <div class="element finalidade" draggable="true">Com o objetivo de gerar renda digna</div>
+                        <div class="element finalidade" draggable="true">Para garantir direitos trabalhistas</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Área de Planejamento -->
+            <div class="planning-section">
+                <div class="section-title">
+                    📝 Planejamento Textual
+                </div>
+
+                <div class="drop-zone-label">Tese</div>
+                <div class="drop-zone" data-type="tese" id="tese-zone">
+                    <span class="placeholder">Arraste uma tese aqui</span>
+                </div>
+
+                <div class="drop-zone-label">Argumento 1</div>
+                <div class="drop-zone" data-type="argumento" id="arg1-zone">
+                    <span class="placeholder">Arraste um argumento aqui</span>
+                </div>
+                
+                <div class="drop-zone-label">Desenvolvimento do Argumento 1</div>
+                <div class="desenvolvimento-container">
+                    <div class="drop-zone" data-type="desenvolvimento" id="dev1a-zone">
+                        <span class="placeholder">Tipo de desenvolvimento 1</span>
+                    </div>
+                    <div class="drop-zone" data-type="desenvolvimento" id="dev1b-zone">
+                        <span class="placeholder">Tipo de desenvolvimento 2</span>
+                    </div>
+                </div>
+
+                <div class="drop-zone-label">Argumento 2</div>
+                <div class="drop-zone" data-type="argumento" id="arg2-zone">
+                    <span class="placeholder">Arraste um argumento aqui</span>
+                </div>
+
+                <div class="drop-zone-label">Desenvolvimento do Argumento 2</div>
+                <div class="desenvolvimento-container">
+                    <div class="drop-zone" data-type="desenvolvimento" id="dev2a-zone">
+                        <span class="placeholder">Tipo de desenvolvimento 1</span>
+                    </div>
+                    <div class="drop-zone" data-type="desenvolvimento" id="dev2b-zone">
+                        <span class="placeholder">Tipo de desenvolvimento 2</span>
+                    </div>
+                </div>
+
+                <div class="drop-zone-label">Proposta de Intervenção</div>
+                <div class="proposta-container">
+                    <div>
+                        <div style="font-weight: bold; margin-bottom: 5px; color: #495057;">Agente</div>
+                        <div class="drop-zone" data-type="agente" id="agente-zone">
+                            <span class="placeholder">Quem vai agir?</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-weight: bold; margin-bottom: 5px; color: #495057;">Ação</div>
+                        <div class="drop-zone" data-type="acao" id="acao-zone">
+                            <span class="placeholder">O que vai fazer?</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-weight: bold; margin-bottom: 5px; color: #495057;">Modo/Meio</div>
+                        <div class="drop-zone" data-type="modo" id="modo-zone">
+                            <span class="placeholder">Como vai fazer?</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-weight: bold; margin-bottom: 5px; color: #495057;">Finalidade</div>
+                        <div class="drop-zone" data-type="finalidade" id="finalidade-zone">
+                            <span class="placeholder">Para que?</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="clear-btn" onclick="clearPlanning()">🗑️ Limpar Planejamento</button>
+            </div>
+        </div>
+
+        <div class="footer">
+            Desenvolvido pelo Professor Sheltom de Aragão
+        </div>
+    </div>
+
+    <script>
+        let draggedElement = null;
+
+        // Toggle categories
+        function toggleCategory(categoryId) {
+            const content = document.getElementById(categoryId + '-content');
+            const toggle = document.getElementById(categoryId + '-toggle');
+            
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                toggle.textContent = '▼';
+            } else {
+                content.classList.add('collapsed');
+                toggle.textContent = '▶';
+            }
+        }
+
+        // Drag and Drop functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add drag event listeners to all elements
+            const elements = document.querySelectorAll('.element');
+            elements.forEach(element => {
+                element.addEventListener('dragstart', handleDragStart);
+                element.addEventListener('dragend', handleDragEnd);
+            });
+
+            // Add drop event listeners to all drop zones
+            const dropZones = document.querySelectorAll('.drop-zone');
+            dropZones.forEach(zone => {
+                zone.addEventListener('dragover', handleDragOver);
+                zone.addEventListener('drop', handleDrop);
+                zone.addEventListener('dragenter', handleDragEnter);
+                zone.addEventListener('dragleave', handleDragLeave);
+                zone.addEventListener('click', handleZoneClick);
+            });
+        });
+
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            draggedElement = null;
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+
+        function handleDragEnter(e) {
+            e.preventDefault();
+            this.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            
+            if (draggedElement) {
+                const dropZoneType = this.getAttribute('data-type');
+                const elementType = getElementType(draggedElement);
+                
+                if (dropZoneType === elementType) {
+                    // Clear placeholder
+                    const placeholder = this.querySelector('.placeholder');
+                    if (placeholder) {
+                        placeholder.remove();
+                    }
+                    
+                    // Remove any existing element in this zone
+                    const existingElement = this.querySelector('.element');
+                    if (existingElement) {
+                        existingElement.remove();
+                    }
+                    
+                    // Clone the dragged element
+                    const clonedElement = draggedElement.cloneNode(true);
+                    clonedElement.classList.add('placed');
+                    clonedElement.removeAttribute('draggable');
+                    
+                    // Add the cloned element to the drop zone
+                    this.appendChild(clonedElement);
+                    this.classList.add('filled');
+                }
+            }
+        }
+
+        function handleZoneClick(e) {
+            if (this.classList.contains('filled')) {
+                // Remove the placed element and restore placeholder
+                const placedElement = this.querySelector('.element');
+                if (placedElement) {
+                    placedElement.remove();
+                }
+                
+                this.classList.remove('filled');
+                
+                // Restore placeholder
+                const placeholder = document.createElement('span');
+                placeholder.className = 'placeholder';
+                placeholder.textContent = getPlaceholderText(this.id);
+                this.appendChild(placeholder);
+            }
+        }
+
+        function getElementType(element) {
+            if (element.classList.contains('tese')) return 'tese';
+            if (element.classList.contains('argumento')) return 'argumento';
+            if (element.classList.contains('desenvolvimento')) return 'desenvolvimento';
+            if (element.classList.contains('agente')) return 'agente';
+            if (element.classList.contains('acao')) return 'acao';
+            if (element.classList.contains('modo')) return 'modo';
+            if (element.classList.contains('finalidade')) return 'finalidade';
+            return '';
+        }
+
+        function getPlaceholderText(zoneId) {
+            const placeholders = {
+                'tese-zone': 'Arraste uma tese aqui',
+                'arg1-zone': 'Arraste um argumento aqui',
+                'arg2-zone': 'Arraste um argumento aqui',
+                'dev1a-zone': 'Tipo de desenvolvimento 1',
+                'dev1b-zone': 'Tipo de desenvolvimento 2',
+                'dev2a-zone': 'Tipo de desenvolvimento 1',
+                'dev2b-zone': 'Tipo de desenvolvimento 2',
+                'agente-zone': 'Quem vai agir?',
+                'acao-zone': 'O que vai fazer?',
+                'modo-zone': 'Como vai fazer?',
+                'finalidade-zone': 'Para que?'
+            };
+            return placeholders[zoneId] || 'Arraste um elemento aqui';
+        }
+
+        function clearPlanning() {
+            const dropZones = document.querySelectorAll('.drop-zone');
+            dropZones.forEach(zone => {
+                // Remove placed elements
+                const placedElement = zone.querySelector('.element');
+                if (placedElement) {
+                    placedElement.remove();
+                }
+                
+                // Remove filled class
+                zone.classList.remove('filled');
+                
+                // Restore placeholder
+                const placeholder = document.createElement('span');
+                placeholder.className = 'placeholder';
+                placeholder.textContent = getPlaceholderText(zone.id);
+                zone.appendChild(placeholder);
+            });
+        }
+
+        // Generate elements based on theme (prepared for API integration)
+        function generateElements() {
+            const themeInput = document.getElementById('theme-input');
+            const generateBtn = document.getElementById('generate-btn');
+            const theme = themeInput.value.trim();
+            
+            if (!theme) {
+                alert('Por favor, digite uma frase temática antes de gerar elementos.');
+                themeInput.focus();
+                return;
+            }
+
+            // Show loading state
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '⏳ Gerando...';
+            generateBtn.classList.add('loading');
+
+            // Simulate API call (replace with actual API integration later)
+            setTimeout(() => {
+                // This is where you would integrate with your API
+                console.log('Tema digitado:', theme);
+                console.log('Aqui você integraria com a API para gerar elementos personalizados');
+                
+                // For now, show success message
+                alert(`Tema registrado: "${theme}"\n\nFuncionalidade de geração via API será implementada em breve!`);
+                
+                // Reset button
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '🔄 Gerar Elementos';
+                generateBtn.classList.remove('loading');
+                
+                // Update header with new theme
+                const headerP = document.querySelector('.header p');
+                headerP.textContent = theme;
+                
+            }, 2000);
+        }
+
+        // Allow Enter key to trigger generation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Existing code...
+            const elements = document.querySelectorAll('.element');
+            elements.forEach(element => {
+                element.addEventListener('dragstart', handleDragStart);
+                element.addEventListener('dragend', handleDragEnd);
+            });
+
+            const dropZones = document.querySelectorAll('.drop-zone');
+            dropZones.forEach(zone => {
+                zone.addEventListener('dragover', handleDragOver);
+                zone.addEventListener('drop', handleDrop);
+                zone.addEventListener('dragenter', handleDragEnter);
+                zone.addEventListener('dragleave', handleDragLeave);
+                zone.addEventListener('click', handleZoneClick);
+            });
+
+            // Add Enter key listener for theme input
+            const themeInput = document.getElementById('theme-input');
+            themeInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    generateElements();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
