@@ -359,7 +359,96 @@
                 <label for="theme-input">✍️ Digite sua frase temática:</label>
                 <div class="input-group">
                     <input type="text" id="theme-input" placeholder="Ex: Desafios para combater a violência contra a mulher no Brasil" />
-                    <button id="generate-btn" onclick="generateElements()">🔄 Gerar Elementos</button>
+                    <button id="generate-btn" onclick="// Generate elements based on theme
+async function generateElements() {
+    const themeInput = document.getElementById('theme-input');
+    const generateBtn = document.getElementById('generate-btn');
+    const theme = themeInput.value.trim();
+    
+    if (!theme) {
+        alert('Por favor, digite uma frase temática antes de gerar elementos.');
+        themeInput.focus();
+        return;
+    }
+
+    // Show loading state
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = '⏳ Gerando...';
+    generateBtn.classList.add('loading');
+
+    try {
+        const response = await fetch('/.netlify/functions/generate-elements', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ theme: theme })
+        });
+
+        if (!response.ok) {
+            throw new Error('Erro na resposta da API');
+        }
+
+        const data = await response.json();
+        
+        // Atualizar elementos no DOM
+        updateBankElements(data);
+        
+        // Update header with new theme
+        const headerP = document.querySelector('.header p');
+        headerP.textContent = theme;
+        
+        alert('Elementos gerados com sucesso!');
+
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao gerar elementos. Tente novamente.');
+    } finally {
+        // Reset button
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '🔄 Gerar Elementos';
+        generateBtn.classList.remove('loading');
+    }
+}
+
+// Função para atualizar os elementos no DOM
+function updateBankElements(data) {
+    // Atualizar teses
+    updateCategory('teses-content', data.teses, 'tese');
+    
+    // Atualizar argumentos
+    updateCategory('argumentos-content', data.argumentos, 'argumento');
+    
+    // Atualizar agentes
+    updateCategory('agentes-content', data.agentes, 'agente');
+    
+    // Atualizar ações
+    updateCategory('acoes-content', data.acoes, 'acao');
+    
+    // Atualizar modos
+    updateCategory('modos-content', data.modos, 'modo');
+    
+    // Atualizar finalidades
+    updateCategory('finalidades-content', data.finalidades, 'finalidade');
+}
+
+function updateCategory(containerId, items, className) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = ''; // Limpar conteúdo atual
+    
+    items.forEach(item => {
+        const element = document.createElement('div');
+        element.className = `element ${className}`;
+        element.draggable = true;
+        element.textContent = item;
+        
+        // Adicionar event listeners
+        element.addEventListener('dragstart', handleDragStart);
+        element.addEventListener('dragend', handleDragEnd);
+        
+        container.appendChild(element);
+    });
+}">🔄 Gerar Elementos</button>
                 </div>
                 <div class="theme-info">
                     <small>💡 Dica: Digite um tema de redação ENEM para gerar elementos personalizados</small>
