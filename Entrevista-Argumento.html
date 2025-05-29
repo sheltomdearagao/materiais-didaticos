@@ -1,555 +1,664 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aula de Redação: Argumento de Autoridade</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Custom styles for drag and drop feedback */
-        .phrase-item {
-            cursor: grab;
+import React, { useState, useEffect, useRef } from 'react';
+
+// Main App component
+const App = () => {
+    // State to manage the current step of the lesson
+    const [currentStep, setCurrentStep] = useState(0);
+    // State for recognition exercise answers
+    const [recognitionAnswers, setRecognitionAnswers] = useState({
+        q1: null, q2: null, q3: null, q4: null, q5: null, q6: null
+    });
+    // State for recognition exercise feedback
+    const [recognitionFeedback, setRecognitionFeedback] = useState({
+        q1: '', q2: '', q3: '', q4: '', q5: '', q6: ''
+    });
+
+    // States for Gemini API features
+    const [topicTheme, setTopicTheme] = useState('');
+    const [generatedTopic, setGeneratedTopic] = useState('');
+    const [generatingTopic, setGeneratingTopic] = useState(false);
+
+    const [analysisCitation, setAnalysisCitation] = useState('');
+    const [analysisIdea, setAnalysisIdea] = useState('');
+    const [expandedAnalysis, setExpandedAnalysis] = useState('');
+    const [expandingAnalysis, setExpandingAnalysis] = useState(false);
+
+    // Data for the drag-and-drop exercise
+    const paragraphData = [
+        {
+            id: 'p1',
+            title: 'Parágrafo 1: Visão Cautelosa da IA',
+            correctOrder: [
+                "É fundamental que a sociedade aprofunde a discussão sobre os impactos da Inteligência Artificial, evitando uma visão simplista que ignora suas complexidades.",
+                "Nesse sentido, o professor Luciano Floridi, especialista em ética digital, alerta que \"a gente está abordando a IA de forma muito superficial, e as pessoas não estão aprofundando o suficiente\".",
+                "Essa perspectiva ressalta a importância de ir além do uso prático da tecnologia, buscando compreender as implicações éticas e sociais que envolvem a IA, como a real capacidade de raciocínio das máquinas, que, segundo o próprio Floridi, ainda apresenta \"ausência de raciocínio real\".",
+                "Dessa forma, uma análise mais cuidadosa e menos apressada torna-se essencial para um desenvolvimento tecnológico mais responsável."
+            ],
+            shuffledPhrases: [], // Will be shuffled dynamically
+            droppedPhrases: [],
+            feedback: ''
+        },
+        {
+            id: 'p2',
+            title: 'Parágrafo 2: Visão Otimista da IA',
+            correctOrder: [
+                "A Inteligência Artificial representa uma revolução tecnológica com o potencial de impulsionar significativamente diversos setores da economia e da sociedade.",
+                "Conforme apontado pelo economista-chefe do Google, a IA é \"a mudança tecnológica mais emocionante\" de sua vida, com impactos claros na eficiência, visto que \"aumenta a eficiência dos desenvolvedores de software em 21%\".",
+                "Tal dado demonstra o poder transformador da IA, que não apenas otimiza processos já existentes, mas também abre caminhos para o desenvolvimento de novas soluções, como a melhoria do acesso à educação e a resolução de problemas complexos, conforme o especialista.",
+                "Portanto, a adoção e o investimento em IA configuram-se como estratégias promissoras para o avanço socioeconômico global."
+            ],
+            shuffledPhrases: [],
+            droppedPhrases: [],
+            feedback: ''
+        },
+        {
+            id: 'p3',
+            title: 'Parágrafo 3: A IA e o Futuro do Trabalho',
+            correctOrder: [
+                "O impacto da Inteligência Artificial no mercado de trabalho é um tema de constante debate, gerando tanto preocupação quanto otimismo sobre o futuro das profissões.",
+                "De um lado, especialistas como o economista-chefe do Google defendem que a IA \"pode criar mais oportunidades de trabalho do que tirar, se as regras certas forem criadas\", sugerindo um cenário de adaptação e novas funções.",
+                "Contudo, a transição para esse novo panorama exige investimento em qualificação e políticas públicas que garantam a inclusão, evitando que a automação aprofunde desigualdades sociais.",
+                "Assim, é crucial que a sociedade se prepare para as transformações, buscando um equilíbrio entre a inovação tecnológica e a proteção dos trabalhadores."
+            ],
+            shuffledPhrases: [],
+            droppedPhrases: [],
+            feedback: ''
+        },
+        {
+            id: 'p4',
+            title: 'Parágrafo 4: Desafios Éticos da IA',
+            correctOrder: [
+                "A rápida evolução da Inteligência Artificial levanta importantes questões éticas que precisam ser consideradas para garantir um desenvolvimento responsável.",
+                "Conforme diversos especialistas em ética digital, um dos principais desafios é o risco de viés nos algoritmos, que podem reproduzir e até amplificar preconceitos existentes nos dados de treinamento.",
+                "Essa preocupação exige uma fiscalização constante e a criação de diretrizes claras para evitar decisões injustas ou discriminatórias por sistemas de IA.",
+                "Portanto, a ética deve ser um pilar fundamental na concepção e implementação de qualquer tecnologia inteligente."
+            ],
+            shuffledPhrases: [],
+            droppedPhrases: [],
+            feedback: ''
+        },
+        {
+            id: 'p5',
+            title: 'Parágrafo 5: A Importância da Educação na Era da IA',
+            correctOrder: [
+                "Diante das transformações trazidas pela Inteligência Artificial, a educação assume um papel central na preparação dos jovens para o futuro.",
+                "Como defende o economista-chefe do Google, a IA pode \"ajudar os professores e dar mais acesso a materiais de qualidade\", indicando um potencial de aprimoramento do ensino.",
+                "Contudo, é essencial que as escolas desenvolvam habilidades como o pensamento crítico e a criatividade, que são complementares às capacidades da IA e valorizadas no mercado de trabalho.",
+                "Assim, investir em uma educação que prepare os alunos para interagir com a IA de forma consciente é crucial para o seu sucesso."
+            ],
+            shuffledPhrases: [],
+            droppedPhrases: [],
+            feedback: ''
         }
-        .phrase-item:active {
-            cursor: grabbing;
+    ];
+
+    // State for drag and drop paragraphs
+    const [dragDropParagraphs, setDragDropParagraphs] = useState(paragraphData);
+
+    // Shuffle phrases for drag and drop on initial load
+    useEffect(() => {
+        const shuffled = paragraphData.map(p => ({
+            ...p,
+            shuffledPhrases: [...p.correctOrder].sort(() => Math.random() - 0.5)
+        }));
+        setDragDropParagraphs(shuffled);
+    }, []);
+
+    // Function to call Gemini API for topic sentence generation
+    const generateTopicFrasal = async () => {
+        if (!topicTheme.trim()) {
+            setGeneratedTopic('Por favor, digite um tema para gerar o tópico frasal.');
+            return;
         }
-        .drag-feedback.correct {
-            background-color: #d1fae5; /* green-100 */
-            border-color: #34d399; /* green-300 */
-            color: #065f46; /* green-800 */
-        }
-        .drag-feedback.incorrect {
-            background-color: #fee2e2; /* red-100 */
-            border-color: #ef4444; /* red-400 */
-            color: #991b1b; /* red-800 */
-        }
-    </style>
-</head>
-<body class="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 p-4 font-sans flex flex-col items-center">
+        setGeneratingTopic(true);
+        setGeneratedTopic('Gerando...');
 
-    <button id="prevBtn" class="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 z-10 p-2 sm:p-3 bg-gray-300 text-gray-800 rounded-full shadow-md hover:bg-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500" aria-label="Anterior">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-        </svg>
-    </button>
+        try {
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: `Gere um tópico frasal para um parágrafo de desenvolvimento sobre o tema: "${topicTheme}". Seja conciso e direto, adequado para alunos do 9º ano.` }] });
+            const payload = { contents: chatHistory };
+            const apiKey = ""; // Leave as empty string for Canvas runtime
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
-    <div id="mainCard" class="w-full max-w-4xl bg-white rounded-2xl shadow-xl p-4 sm:p-8 flex flex-col flex-grow max-h-[90vh] overflow-hidden">
-        <h1 id="lessonTitle" class="text-2xl sm:text-4xl font-extrabold text-center text-blue-800 mb-4 sm:mb-6 leading-tight">
-            Aula de Redação: Argumento de Autoridade
-        </h1>
-        <h2 id="stepTitle" class="text-xl sm:text-2xl font-bold text-center text-purple-700 mb-6 sm:mb-8"></h2>
-
-        <div id="lessonContentContainer" class="flex-grow overflow-y-auto pb-4">
-            <div id="lessonContent" class="lesson-content">
-                </div>
-        </div>
-    </div>
-
-    <button id="nextBtn" class="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 z-10 p-2 sm:p-3 bg-gray-300 text-gray-800 rounded-full shadow-md hover:bg-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500" aria-label="Próximo">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-        </svg>
-    </button>
-
-    <footer class="mt-auto py-4 text-center text-gray-600 text-sm w-full">
-        Desenvolvido pelo Prof. Sheltom de Aragão
-    </footer>
-
-    <script>
-        // Data for the lesson steps
-        const stepsData = [
-            {
-                title: "Bem-vindos à Aula de Redação!",
-                content: `
-                    <div class="text-gray-700 flex flex-col items-center p-4 sm:p-6">
-                        <div class="text-6xl text-blue-600 mb-4">
-                            ✍️
-                        </div>
-                        <p class="mb-4 text-center text-base sm:text-lg">Olá, pessoal! Sejam bem-vindos à nossa aula de redação.</p>
-                        <p class="mb-4 text-center text-base sm:text-lg">Hoje, vamos aprender uma técnica superpoderosa para deixar seus textos ainda mais fortes e convincentes: o <strong>argumento de autoridade</strong>!</p>
-                        <p class="text-center text-base sm:text-lg">É quando a gente usa a fala de alguém que é especialista no assunto para dar força à nossa opinião. As <strong>entrevistas</strong> são perfeitas para isso, pois trazem opiniões <strong>diferentes</strong> sobre o mesmo tema!</p>
-                    </div>
-                `
-            },
-            {
-                title: "Tema: Inteligência Artificial (IA)",
-                content: `
-                    <div class="text-gray-700 p-4 sm:p-6">
-                        <p class="mb-6 text-center text-base sm:text-lg">Vamos usar a <strong>Inteligência Artificial (IA)</strong> como nosso tema. Será que a IA é só boa ou tem um lado que precisamos ficar de olho?</p>
-
-                        <div class="flex flex-col md:flex-row gap-6">
-                            <div class="flex-1 bg-red-50 p-4 rounded-lg border border-red-200 shadow-md flex flex-col items-center text-center">
-                                <div class="text-4xl text-red-600 mb-2">
-                                    ⚠️
-                                </div>
-                                <h3 class="text-xl font-semibold mb-2 text-red-700">Professor Luciano Floridi</h3>
-                                <p class="font-bold text-red-800 mb-2 text-base sm:text-lg">Visão Cautelosa</p>
-                                <ul class="list-none p-0 m-0 text-sm sm:text-base">
-                                    <li class="mb-1">"A gente está abordando a IA de forma muito superficial."</li>
-                                    <li>"Nos programas de IA atuais... falta um 'raciocínio de verdade'."</li>
-                                </ul>
-                                <p class="text-xs italic mt-2 sm:text-sm">Ele nos convida a pensar mais a fundo, sem se deixar enganar pela superfície.</p>
-                            </div>
-
-                            <div class="flex-1 bg-green-50 p-4 rounded-lg border border-green-200 shadow-md flex flex-col items-center text-center">
-                                <div class="text-4xl text-green-600 mb-2">
-                                    ✨
-                                </div>
-                                <h3 class="text-xl font-semibold mb-2 text-green-700">Economista-Chefe do Google</h3>
-                                <p class="font-bold text-green-800 mb-2 text-base sm:text-lg">Visão Otimista</p>
-                                <ul class="list-none p-0 m-0 text-sm sm:text-base">
-                                    <li class="mb-1">"A IA é 'a mudança tecnológica mais emocionante'."</li>
-                                    <li class="mb-1">"A IA aumenta a eficiência... em 21% [e] 40%."</li>
-                                    <li>"Pode criar mais oportunidades de trabalho."</li>
-                                </ul>
-                                <p class="text-xs italic mt-2 sm:text-sm">Ele vê a IA como uma força transformadora e cheia de novas possibilidades.</p>
-                            </div>
-                        </div>
-                    </div>
-                `
-            },
-            {
-                title: "Estrutura do Parágrafo de Desenvolvimento",
-                content: `
-                    <div class="text-gray-700 flex flex-col items-center p-4 sm:p-6">
-                        <p class="mb-6 text-center text-base sm:text-lg">Para usar a fala de um especialista, seu parágrafo precisa de uma estrutura clara. Vejam o esquema:</p>
-
-                        <div class="flex flex-col items-center space-y-4 w-full max-w-md">
-                            <div class="bg-blue-100 p-4 rounded-lg shadow-md w-full text-center border-2 border-blue-300">
-                                <p class="font-bold text-blue-800 text-base sm:text-lg">1. Tópico Frasal</p>
-                                <p class="text-sm sm:text-base">A ideia principal do seu parágrafo.</p>
-                            </div>
-                            <div class="text-4xl text-gray-400">👇</div>
-                            <div class="bg-purple-100 p-4 rounded-lg shadow-md w-full text-center border-2 border-purple-300">
-                                <p class="font-bold text-purple-800 text-base sm:text-lg">2. Argumento de Autoridade (Citação)</p>
-                                <p class="text-sm sm:text-base">O trecho da entrevista (entre aspas) e quem falou.</p>
-                            </div>
-                            <div class="text-4xl text-gray-400">👇</div>
-                            <div class="bg-green-100 p-4 rounded-lg shadow-md w-full text-center border-2 border-green-300">
-                                <p class="font-bold text-green-800 text-base sm:text-lg">3. Análise / Explicação</p>
-                                <p class="text-sm sm:text-base">O que a citação significa e como ela prova sua ideia.</p>
-                            </div>
-                            <div class="text-4xl text-gray-400">👇</div>
-                            <div class="bg-yellow-100 p-4 rounded-lg shadow-md w-full text-center border-2 border-yellow-300">
-                                <p class="font-bold text-yellow-800 text-base sm:text-lg">4. Fechamento</p>
-                                <p class="text-sm sm:text-base">Uma frase que encerra o parágrafo.</p>
-                            </div>
-                        </div>
-
-                        <p class="mt-8 mb-4 text-center text-base sm:text-lg">Agora, vejam os exemplos completos de parágrafos:</p>
-
-                        <h3 class="text-xl font-semibold mb-2 text-blue-700">Exemplo 1: Visão Cautelosa da IA (usando Floridi)</h3>
-                        <div class="bg-gray-100 p-4 rounded-lg border border-gray-200 mb-4 w-full">
-                            <p class="font-bold mb-2 text-base sm:text-lg">Parágrafo de Desenvolvimento</p>
-                            <p class="text-sm sm:text-base">É fundamental que a sociedade aprofunde a discussão sobre os impactos da Inteligência Artificial, evitando uma visão simplista que ignora suas complexidades. Nesse sentido, o professor Luciano Floridi, especialista em ética digital, alerta que <strong>"a gente está abordando a IA de forma muito superficial, e as pessoas não estão aprofundando o suficiente"</strong>. Essa perspectiva ressalta a importância de ir além do uso prático da tecnologia, buscando compreender as implicações éticas e sociais que envolvem a IA, como a real capacidade de raciocínio das máquinas, que, segundo o próprio Floridi, ainda apresenta <strong>"ausência de raciocínio real"</strong>. Dessa forma, uma análise mais cuidadosa e menos apressada torna-se essencial para um desenvolvimento tecnológico mais responsável.</p>
-                        </div>
-                        <h3 class="text-xl font-semibold mb-2 text-blue-700">Exemplo 2: Visão Otimista da IA (usando o economista do Google)</h3>
-                        <div class="bg-gray-100 p-4 rounded-lg border border-gray-200 w-full">
-                            <p class="font-bold mb-2 text-base sm:text-lg">Parágrafo de Desenvolvimento</p>
-                            <p class="text-sm sm:text-base">A Inteligência Artificial representa uma revolução tecnológica com o potencial de impulsionar significativamente diversos setores da economia e da sociedade. Conforme apontado pelo economista-chefe do Google, a IA é <strong>"a mudança tecnológica mais emocionante"</strong> de sua vida, com impactos claros na eficiência, visto que <strong>"aumenta a eficiência dos desenvolvedores de software em 21%"</strong>. Tal dado demonstra o poder transformador da IA, que não apenas otimiza processos já existentes, mas também abre caminhos para o desenvolvimento de novas soluções, como a melhoria do acesso à educação e a resolução de problemas complexos, conforme o especialista. Portanto, a adoção e o investimento em IA configuram-se como estratégias promissoras para o avanço socioeconômico global.</p>
-                        </div>
-                    </div>
-                `
-            },
-            {
-                title: "Exercício de Reconhecimento",
-                content: `
-                    <div class="text-gray-700 p-4 sm:p-6">
-                        <p class="mb-4 text-center font-bold text-base sm:text-lg">Vamos ver se vocês entenderam direitinho! Respondam às perguntas:</p>
-
-                        <div class="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
-                            <p class="font-semibold mb-2 text-base sm:text-lg">1. Qual é o objetivo principal de um argumento de autoridade em uma redação?</p>
-                            <div class="flex flex-col space-y-2">
-                                <label class="inline-flex items-center text-sm sm:text-base">
-                                    <input type="radio" name="q1" value="a" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
-                                    <span class="ml-2">A) Deixar o texto mais longo.</span>
-                                </label>
-                                <label class="inline-flex items-center text-sm sm:text-base">
-                                    <input type="radio" name="q1" value="b" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
-                                    <span class="ml-2">B) Provar um ponto com a fala de um especialista.</span>
-                                </label>
-                                <label class="inline-flex items-center text-sm sm:text-base">
-                                    <input type="radio" name="q1" value="c" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
-                                    <span class="ml-2">C) Fazer o leitor rir.</span>
-                                </label>
-                            </div>
-                            <button onclick="checkRecognitionAnswer('q1')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
-                            <p id="feedback_q1" class="mt-2 text-sm italic"></p>
-                        </div>
-
-                        <div class="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
-                            <p class="font-semibold mb-2 text-base sm:text-lg">2. O Professor Luciano Floridi tem uma visão mais otimista ou mais cautelosa sobre a IA?</p>
-                            <div class="flex flex-col space-y-2">
-                                <label class="inline-flex items-center text-sm sm:text-base">
-                                    <input type="radio" name="q2" value="a" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
-                                    <span class="ml-2">A) Otimista.</span>
-                                </label>
-                                <label class="inline-flex items-center text-sm sm:text-base">
-                                    <input type="radio" name="q2" value="b" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
-                                    <span class="ml-2">B) Cautelosa.</span>
-                                </label>
-                            </div>
-                            <button onclick="checkRecognitionAnswer('q2')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
-                            <p id="feedback_q2" class="mt-2 text-sm italic"></p>
-                        </div>
-
-                        <div class="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
-                            <p class="font-semibold mb-2 text-base sm:text-lg">3. Qual parte do parágrafo de desenvolvimento apresenta a ideia principal?</p>
-                            <div class="flex flex-col space-y-2">
-                                <label class="inline-flex items-center text-sm sm:text-base">
-                                    <input type="radio" name="q3" value="a" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
-                                    <span class="ml-2">A) O fechamento.</span>
-                                </label>
-                                <label class="inline-flex items-center text-sm sm:text-base">
-                                    <input type="radio" name="q3" value="b" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
-                                    <span class="ml-2">B) O argumento de autoridade.</span>
-                                </label>
-                                <label class="inline-flex items-center text-sm sm:text-base">
-                                    <input type="radio" name="q3" value="c" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
-                                    <span class="ml-2">C) O tópico frasal.</span>
-                                </label>
-                            </div>
-                            <button onclick="checkRecognitionAnswer('q3')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
-                            <p id="feedback_q3" class="mt-2 text-sm italic"></p>
-                        </div>
-
-                        <div class="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
-                            <p class="font-semibold mb-2 text-base sm:text-lg">4. Verdadeiro ou Falso: Apenas citar um especialista é suficiente para um bom argumento de autoridade, sem precisar explicar a citação.</p>
-                            <div class="flex flex-col space-y-2">
-                                <label class="inline-flex items-center text-sm sm:text-base">
-                                    <input type="radio" name="q4" value="true" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
-                                    <span class="ml-2">Verdadeiro</span>
-                                </label>
-                                <label class="inline-flex items-center text-sm sm:text-base">
-                                    <input type="radio" name="q4" value="false" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
-                                    <span class="ml-2">Falso</span>
-                                </label>
-                            </div>
-                            <button onclick="checkRecognitionAnswer('q4')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
-                            <p id="feedback_q4" class="mt-2 text-sm italic"></p>
-                        </div>
-
-                        <div class="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
-                            <p class="font-semibold mb-2 text-base sm:text-lg">5. Qual das opções abaixo melhor descreve a função da "Análise/Explicação" em um parágrafo de desenvolvimento?</p>
-                            <div class="flex flex-col space-y-2">
-                                <label class="inline-flex items-center text-sm sm:text-base">
-                                    <input type="radio" name="q5" value="a" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
-                                    <span class="ml-2">A) Apresentar um novo argumento não relacionado à citação.</span>
-                                </label>
-                                <label class="inline-flex items-center text-sm sm:text-base">
-                                    <input type="radio" name="q5" value="b" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
-                                    <span class="ml-2">B) Explicar o significado da citação e como ela se relaciona com a ideia principal do parágrafo.</span>
-                                </label>
-                                <label class="inline-flex items-center text-sm sm:text-base">
-                                    <input type="radio" name="q5" value="c" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
-                                    <span class="ml-2">C) Resumir todo o texto da redação.</span>
-                                </label>
-                            </div>
-                            <button onclick="checkRecognitionAnswer('q5')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
-                            <p id="feedback_q5" class="mt-2 text-sm italic"></p>
-                        </div>
-
-                        <div class="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
-                            <p class="font-semibold mb-2 text-base sm:text-lg">6. Se você fosse escrever um parágrafo defendendo que a IA pode trazer muitos benefícios para a sociedade, qual dos especialistas seria mais adequado para citar?</p>
-                            <div class="flex flex-col space-y-2">
-                                <label class="inline-flex items-center text-sm sm:text-base">
-                                    <input type="radio" name="q6" value="a" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
-                                    <span class="ml-2">A) O Professor Luciano Floridi.</span>
-                                </label>
-                                <label class="inline-flex items-center text-sm sm:text-base">
-                                    <input type="radio" name="q6" value="b" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
-                                    <span class="ml-2">B) O Economista-Chefe do Google.</span>
-                                </label>
-                                <label class="inline-flex items-center text-sm sm:text-base">
-                                    <input type="radio" name="q6" value="c" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
-                                    <span class="ml-2">C) Ambos, pois eles têm a mesma opinião.</span>
-                                </label>
-                            </div>
-                            <button onclick="checkRecognitionAnswer('q6')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
-                            <p id="feedback_q6" class="mt-2 text-sm italic"></p>
-                        </div>
-                    </div>
-                `
-            },
-            {
-                title: "Exercício de Arrastar e Soltar: Construindo Parágrafos!",
-                content: `
-                    <div class="text-gray-700 p-4 sm:p-6">
-                        <p class="mb-4 text-center text-base sm:text-lg">Chegou a hora de vocês mostrarem o que aprenderam! Abaixo, vocês encontrarão frases embaralhadas de parágrafos de desenvolvimento. Sua tarefa é <strong>arrastar e soltar</strong> as frases na ordem correta para montar o parágrafo. Lembrem-se da estrutura: Tópico Frasal, Argumento de Autoridade, Análise/Explicação e Fechamento.</p>
-                        <p class="mb-6 font-bold text-red-600 text-center text-base sm:text-lg">Dica: Arrastem as frases da esquerda para a área de "Parágrafo Montado" na ordem que acharem correta!</p>
-
-                        <div id="dragDropContainer" class="flex flex-col gap-8">
-                            </div>
-                    </div>
-                `
-            }
-            // Removed Gemini Tools for simplicity in vanilla JS for this user's context
-        ];
-
-        let currentStep = 0; // Global state for current step
-
-        // DOM elements
-        const stepTitleElement = document.getElementById('stepTitle');
-        const lessonContentElement = document.getElementById('lessonContent');
-        const prevBtn = document.getElementById('prevBtn');
-        const nextBtn = document.getElementById('nextBtn');
-
-        // Recognition Quiz Answers (Correct answers)
-        const recognitionAnswers = {
-            q1: 'b', // Provar um ponto com a fala de um especialista.
-            q2: 'b', // Cautelosa.
-            q3: 'c', // O tópico frasal.
-            q4: 'false', // Falso (precisa explicar).
-            q5: 'b', // Explicar o significado da citação...
-            q6: 'b'  // O Economista-Chefe do Google.
-        };
-
-        // Drag and Drop Data
-        const paragraphData = [
-            {
-                id: 'p1',
-                title: 'Parágrafo 1: Visão Cautelosa da IA',
-                correctOrder: [
-                    "É fundamental que a sociedade aprofunde a discussão sobre os impactos da Inteligência Artificial, evitando uma visão simplista que ignora suas complexidades.",
-                    "Nesse sentido, o professor Luciano Floridi, especialista em ética digital, alerta que \"a gente está abordando a IA de forma muito superficial, e as pessoas não estão aprofundando o suficiente\".",
-                    "Essa perspectiva ressalta a importância de ir além do uso prático da tecnologia, buscando compreender as implicações éticas e sociais que envolvem a IA, como a real capacidade de raciocínio das máquinas, que, segundo o próprio Floridi, ainda apresenta \"ausência de raciocínio real\".",
-                    "Dessa forma, uma análise mais cuidadosa e menos apressada torna-se essencial para um desenvolvimento tecnológico mais responsável."
-                ]
-            },
-            {
-                id: 'p2',
-                title: 'Parágrafo 2: Visão Otimista da IA',
-                correctOrder: [
-                    "A Inteligência Artificial representa uma revolução tecnológica com o potencial de impulsionar significativamente diversos setores da economia e da sociedade.",
-                    "Conforme apontado pelo economista-chefe do Google, a IA é \"a mudança tecnológica mais emocionante\" de sua vida, com impactos claros na eficiência, visto que \"aumenta a eficiência dos desenvolvedores de software em 21%\".",
-                    "Tal dado demonstra o poder transformador da IA, que não apenas otimiza processos já existentes, mas também abre caminhos para o desenvolvimento de novas soluções, como a melhoria do acesso à educação e a resolução de problemas complexos, conforme o especialista.",
-                    "Portanto, a adoção e o investimento em IA configuram-se como estratégias promissoras para o avanço socioeconômico global."
-                ]
-            },
-            {
-                id: 'p3',
-                title: 'Parágrafo 3: A IA e o Futuro do Trabalho',
-                correctOrder: [
-                    "O impacto da Inteligência Artificial no mercado de trabalho é um tema de constante debate, gerando tanto preocupação quanto otimismo sobre o futuro das profissões.",
-                    "De um lado, especialistas como o economista-chefe do Google defendem que a IA \"pode criar mais oportunidades de trabalho do que tirar, se as regras certas forem criadas\", sugerindo um cenário de adaptação e novas funções.",
-                    "Contudo, a transição para esse novo panorama exige investimento em qualificação e políticas públicas que garantam a inclusão, evitando que a automação aprofunde desigualdades sociais.",
-                    "Assim, é crucial que a sociedade se prepare para as transformações, buscando um equilíbrio entre a inovação tecnológica e a proteção dos trabalhadores."
-                ]
-            },
-            {
-                id: 'p4',
-                title: 'Parágrafo 4: Desafios Éticos da IA',
-                correctOrder: [
-                    "A rápida evolução da Inteligência Artificial levanta importantes questões éticas que precisam ser consideradas para garantir um desenvolvimento responsável.",
-                    "Conforme diversos especialistas em ética digital, um dos principais desafios é o risco de viés nos algoritmos, que podem reproduzir e até amplificar preconceitos existentes nos dados de treinamento.",
-                    "Essa preocupação exige uma fiscalização constante e a criação de diretrizes claras para evitar decisões injustas ou discriminatórias por sistemas de IA.",
-                    "Portanto, a ética deve ser um pilar fundamental na concepção e implementação de qualquer tecnologia inteligente."
-                ]
-            },
-            {
-                id: 'p5',
-                title: 'Parágrafo 5: A Importância da Educação na Era da IA',
-                correctOrder: [
-                    "Diante das transformações trazidas pela Inteligência Artificial, a educação assume um papel central na preparação dos jovens para o futuro.",
-                    "Como defende o economista-chefe do Google, a IA pode \"ajudar os professores e dar mais acesso a materiais de qualidade\", indicando um potencial de aprimoramento do ensino.",
-                    "Contudo, é essencial que as escolas desenvolvam habilidades como o pensamento crítico e a criatividade, que são complementares às capacidades da IA e valorizadas no mercado de trabalho.",
-                    "Assim, investir em uma educação que prepare os alunos para interagir com a IA de forma consciente é crucial para o seu sucesso."
-                ]
-            }
-        ];
-
-        let shuffledParagraphs = []; // To store shuffled phrases for each paragraph
-        let droppedPhrases = {}; // To store dropped phrases for each paragraph
-
-        // Function to shuffle an array
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]]; // ES6 swap
-            }
-            return array;
-        }
-
-        // Initialize drag and drop data
-        function initializeDragDrop() {
-            shuffledParagraphs = paragraphData.map(p => ({
-                id: p.id,
-                shuffled: shuffleArray([...p.correctOrder])
-            }));
-            droppedPhrases = {};
-            paragraphData.forEach(p => droppedPhrases[p.id] = []);
-        }
-
-        // --- Core UI Update Function ---
-        function updateUI() {
-            stepTitleElement.innerHTML = stepsData[currentStep].title;
-            lessonContentElement.innerHTML = stepsData[currentStep].content;
-
-            // Update button visibility
-            prevBtn.style.display = currentStep === 0 ? 'none' : 'block';
-            nextBtn.style.display = currentStep === stepsData.length - 1 ? 'none' : 'block';
-
-            // Specific logic for recognition exercise
-            if (stepsData[currentStep].title.includes("Reconhecimento")) {
-                // Attach event listeners for recognition quizzes
-                document.querySelectorAll('.bg-blue-50 button').forEach(button => {
-                    button.onclick = (event) => {
-                        const questionId = event.target.closest('.bg-blue-50').querySelector('p').classList[0].split('_')[1]; // Extracts q1, q2, etc.
-                        checkRecognitionAnswer(questionId);
-                    };
-                });
-            }
-
-            // Specific logic for drag and drop exercise
-            if (stepsData[currentStep].title.includes("Arrastar e Soltar")) {
-                renderDragDropExercise();
-            }
-            
-            // Scroll to top of content area on step change
-            document.getElementById('lessonContentContainer').scrollTop = 0;
-        }
-
-        // --- Recognition Exercise Logic ---
-        window.checkRecognitionAnswer = function(questionId) {
-            const selectedOption = document.querySelector(`input[name="${questionId}"]:checked`);
-            const feedbackElement = document.getElementById(`feedback_${questionId}`);
-            if (!selectedOption) {
-                feedbackElement.textContent = 'Por favor, selecione uma opção.';
-                feedbackElement.className = 'mt-2 text-sm italic text-red-600';
-                return;
-            }
-
-            const isCorrect = selectedOption.value === recognitionAnswers[questionId];
-            if (isCorrect) {
-                feedbackElement.textContent = 'Correto! Muito bem!';
-                feedbackElement.className = 'mt-2 text-sm italic text-green-700';
-            } else {
-                let correctText = '';
-                if (questionId === 'q1') correctText = 'O objetivo é dar força ao seu argumento.';
-                if (questionId === 'q2') correctText = 'Ele nos convida a pensar mais profundamente.';
-                if (questionId === 'q3') correctText = 'O tópico frasal é a primeira frase e apresenta a ideia principal.';
-                if (questionId === 'q4') correctText = 'É fundamental explicar a citação para conectá-la ao seu argumento.';
-                if (questionId === 'q5') correctText = 'A análise é a sua "conversa" com a citação.';
-                if (questionId === 'q6') correctText = 'O Economista-Chefe do Google tem uma visão mais otimista, ideal para defender os benefícios.';
-                
-                feedbackElement.textContent = `Ops! Tente novamente. ${correctText}`;
-                feedbackElement.className = 'mt-2 text-sm italic text-red-600';
-            }
-        };
-
-        // --- Drag and Drop Exercise Logic ---
-        function renderDragDropExercise() {
-            const container = document.getElementById('dragDropContainer');
-            if (!container) return; // Exit if not on drag drop step
-
-            container.innerHTML = ''; // Clear previous content
-
-            shuffledParagraphs.forEach((paraData, paraIndex) => {
-                const paraElement = document.createElement('div');
-                paraElement.className = 'bg-white p-6 rounded-lg shadow-md mb-8 border border-gray-200';
-                paraElement.innerHTML = `
-                    <h3 class="text-xl font-semibold mb-4 text-blue-700 text-center">${paraData.title}</h3>
-                    <div class="flex flex-col md:flex-row gap-6">
-                        <div id="shuffled-${paraData.id}" class="flex-1 bg-gray-50 p-4 rounded-md border border-gray-100 min-h-[150px] sm:min-h-[200px]">
-                            <p class="font-semibold mb-2 text-gray-800 text-base sm:text-lg">Frases para Arrastar:</p>
-                            ${paraData.shuffled.map((phrase, index) => `
-                                <div id="phrase-${paraData.id}-${index}" draggable="true" data-phrase="${phrase}" class="phrase-item bg-purple-100 text-purple-800 p-3 mb-2 rounded-md shadow-sm hover:bg-purple-200 transition-colors text-sm sm:text-base">
-                                    ${phrase}
-                                </div>
-                            `).join('')}
-                        </div>
-
-                        <div id="dropped-${paraData.id}" class="flex-1 bg-green-50 p-4 rounded-md border border-green-200 min-h-[150px] sm:min-h-[200px]">
-                            <p class="font-semibold mb-2 text-gray-800 text-base sm:text-lg">Parágrafo Montado:</p>
-                            ${droppedPhrases[paraData.id].length === 0 ?
-                                '<p class="text-gray-500 italic text-sm sm:text-base">Arraste as frases para cá...</p>' :
-                                droppedPhrases[paraData.id].map(phrase => `
-                                    <div class="bg-green-100 text-green-800 p-3 mb-2 rounded-md shadow-sm text-sm sm:text-base">${phrase}</div>
-                                `).join('')
-                            }
-                        </div>
-                    </div>
-                    <div class="flex justify-end gap-2 mt-4">
-                        <button onclick="resetDragDrop('${paraData.id}')" class="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors shadow-md text-sm sm:text-base">Reiniciar</button>
-                        <button onclick="checkDragDrop('${paraData.id}')" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
-                    </div>
-                    <p id="dragFeedback-${paraData.id}" class="mt-2 text-center font-bold text-sm sm:text-base"></p>
-                `;
-                container.appendChild(paraElement);
-
-                // Add event listeners for drag and drop
-                const shuffledDiv = document.getElementById(`shuffled-${paraData.id}`);
-                const droppedDiv = document.getElementById(`dropped-${paraData.id}`);
-
-                shuffledDiv.querySelectorAll('.phrase-item').forEach(item => {
-                    item.addEventListener('dragstart', (e) => {
-                        e.dataTransfer.setData('text/plain', e.target.dataset.phrase);
-                        e.dataTransfer.effectAllowed = 'move';
-                    });
-                });
-
-                droppedDiv.addEventListener('dragover', (e) => e.preventDefault());
-                droppedDiv.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    const phraseText = e.dataTransfer.getData('text/plain');
-                    
-                    const currentPara = paragraphData.find(p => p.id === paraData.id);
-                    const shuffledArray = shuffledParagraphs.find(p => p.id === paraData.id).shuffled;
-
-                    // Add to dropped and remove from shuffled
-                    if (!droppedPhrases[paraData.id].includes(phraseText) && shuffledArray.includes(phraseText)) {
-                        droppedPhrases[paraData.id].push(phraseText);
-                        shuffledParagraphs.find(p => p.id === paraData.id).shuffled = shuffledArray.filter(p => p !== phraseText);
-                        renderDragDropExercise(); // Re-render to update UI
-                    }
-                });
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
             });
-        }
+            const result = await response.json();
 
-        window.resetDragDrop = function(paraId) {
-            const para = paragraphData.find(p => p.id === paraId);
-            shuffledParagraphs.find(p => p.id === paraId).shuffled = shuffleArray([...para.correctOrder]);
-            droppedPhrases[paraId] = [];
-            document.getElementById(`dragFeedback-${paraId}`).textContent = '';
-            renderDragDropExercise();
-        }
-
-        window.checkDragDrop = function(paraId) {
-            const feedbackElement = document.getElementById(`dragFeedback-${paraId}`);
-            const currentDropped = droppedPhrases[paraId];
-            const correctOrder = paragraphData.find(p => p.id === paraId).correctOrder;
-
-            // Simple string comparison for now, assuming order matters strictly
-            const isCorrect = JSON.stringify(currentDropped) === JSON.stringify(correctOrder);
-
-            if (isCorrect) {
-                feedbackElement.textContent = '🎉 Parabéns! Parágrafo montado corretamente!';
-                feedbackElement.className = 'mt-2 text-center font-bold text-sm sm:text-base text-green-700';
+            if (result.candidates && result.candidates.length > 0 &&
+                result.candidates[0].content && result.candidates[0].content.parts &&
+                result.candidates[0].content.parts.length > 0) {
+                const text = result.candidates[0].content.parts[0].text;
+                setGeneratedTopic(text);
             } else {
-                feedbackElement.textContent = '🤔 Quase lá! A ordem ainda não está perfeita. Tente novamente!';
-                feedbackElement.className = 'mt-2 text-center font-bold text-sm sm:text-base text-red-600';
+                setGeneratedTopic('Não foi possível gerar o tópico frasal. Tente novamente.');
             }
+        } catch (error) {
+            console.error('Erro ao chamar a API Gemini para tópico frasal:', error);
+            setGeneratedTopic('Erro ao gerar o tópico frasal. Verifique sua conexão.');
+        } finally {
+            setGeneratingTopic(false);
         }
+    };
 
+    // Function to call Gemini API for analysis expansion
+    const expandAnalysis = async () => {
+        if (!analysisCitation.trim() || !analysisIdea.trim()) {
+            setExpandedAnalysis('Por favor, preencha a citação e sua ideia inicial para expandir a análise.');
+            return;
+        }
+        setExpandingAnalysis(true);
+        setExpandedAnalysis('Expandindo análise...');
 
-        // --- Navigation Logic ---
-        function navigate(direction) {
-            if (direction === 'next' && currentStep < stepsData.length - 1) {
-                currentStep++;
-            } else if (direction === 'prev' && currentStep > 0) {
-                currentStep--;
+        try {
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: `Expanda a análise para a seguinte citação: "${analysisCitation}". Minha ideia inicial para a análise é: "${analysisIdea}". Desenvolva a análise de forma didática e clara, adequada para alunos do 9º ano, com foco em como a citação apoia a ideia inicial.` }] });
+            const payload = { contents: chatHistory };
+            const apiKey = ""; // Leave as empty string for Canvas runtime
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+
+            if (result.candidates && result.candidates.length > 0 &&
+                result.candidates[0].content && result.candidates[0].content.parts &&
+                result.candidates[0].content.parts.length > 0) {
+                const text = result.candidates[0].content.parts[0].text;
+                setExpandedAnalysis(text);
+            } else {
+                setExpandedAnalysis('Não foi possível expandir a análise. Tente novamente.');
             }
-            updateUI();
+        } catch (error) {
+            console.error('Erro ao chamar a API Gemini para expandir análise:', error);
+            setExpandedAnalysis('Erro ao expandir a análise. Verifique sua conexão.');
+        } finally {
+            setExpandingAnalysis(false);
         }
+    };
 
-        // Attach event listeners to navigation buttons
-        prevBtn.addEventListener('click', () => navigate('prev'));
-        nextBtn.addEventListener('click', () => navigate('next'));
 
-        // Initial render
-        initializeDragDrop();
-        updateUI();
+    // Lesson content divided into steps - REORDERED FOR PROGRESSIVE DIFFICULTY
+    const steps = [
+        {
+            title: "Bem-vindos à Aula de Redação!",
+            content: (
+                <div className="text-gray-700 flex flex-col items-center p-4 sm:p-6">
+                    <div className="text-6xl text-blue-600 mb-4">
+                        ✍️
+                    </div>
+                    <p className="mb-4 text-center text-base sm:text-lg">Olá, pessoal! Sejam bem-vindos à nossa aula de redação.</p>
+                    <p className="mb-4 text-center text-base sm:text-lg">Hoje, vamos aprender uma técnica superpoderosa para deixar seus textos ainda mais fortes e convincentes: o <strong>argumento de autoridade</strong>!</p>
+                    <p className="text-center text-base sm:text-lg">É quando a gente usa a fala de alguém que é especialista no assunto para dar força à nossa opinião. As <strong>entrevistas</strong> são perfeitas para isso, pois trazem opiniões <strong>diferentes</strong> sobre o mesmo tema!</p>
+                </div>
+            )
+        },
+        {
+            title: "Tema: Inteligência Artificial (IA)",
+            content: (
+                <div className="text-gray-700 p-4 sm:p-6">
+                    <p className="mb-6 text-center text-base sm:text-lg">Vamos usar a <strong>Inteligência Artificial (IA)</strong> como nosso tema. Será que a IA é só boa ou tem um lado que precisamos ficar de olho?</p>
 
-    </script>
-</body>
-</html>
+                    <div className="flex flex-col md:flex-row gap-6">
+                        {/* Card Floridi */}
+                        <div className="flex-1 bg-red-50 p-4 rounded-lg border border-red-200 shadow-md flex flex-col items-center text-center">
+                            <div className="text-4xl text-red-600 mb-2">
+                                ⚠️
+                            </div>
+                            <h3 className="text-xl font-semibold mb-2 text-red-700">Professor Luciano Floridi</h3>
+                            <p className="font-bold text-red-800 mb-2 text-base sm:text-lg">Visão Cautelosa</p>
+                            <ul className="list-none p-0 m-0 text-sm sm:text-base">
+                                <li className="mb-1">"A gente está abordando a IA de forma muito superficial."</li>
+                                <li>"Nos programas de IA atuais... falta um 'raciocínio de verdade'."</li>
+                            </ul>
+                            <p className="text-xs italic mt-2 sm:text-sm">Ele nos convida a pensar mais a fundo, sem se deixar enganar pela superfície.</p>
+                        </div>
+
+                        {/* Card Economista Google */}
+                        <div className="flex-1 bg-green-50 p-4 rounded-lg border border-green-200 shadow-md flex flex-col items-center text-center">
+                            <div className="text-4xl text-green-600 mb-2">
+                                ✨
+                            </div>
+                            <h3 className="text-xl font-semibold mb-2 text-green-700">Economista-Chefe do Google</h3>
+                            <p className="font-bold text-green-800 mb-2 text-base sm:text-lg">Visão Otimista</p>
+                            <ul className="list-none p-0 m-0 text-sm sm:text-base">
+                                <li className="mb-1">"A IA é 'a mudança tecnológica mais emocionante'."</li>
+                                <li className="mb-1">"A IA aumenta a eficiência... em 21% [e] 40%."</li>
+                                <li>"Pode criar mais oportunidades de trabalho."</li>
+                            </ul>
+                            <p className="text-xs italic mt-2 sm:text-sm">Ele vê a IA como uma força transformadora e cheia de novas possibilidades.</p>
+                        </div>
+                    </div>
+                </div>
+            )
+        },
+        {
+            title: "Estrutura do Parágrafo de Desenvolvimento",
+            content: (
+                <div className="text-gray-700 flex flex-col items-center p-4 sm:p-6">
+                    <p className="mb-6 text-center text-base sm:text-lg">Para usar a fala de um especialista, seu parágrafo precisa de uma estrutura clara. Vejam o esquema:</p>
+
+                    <div className="flex flex-col items-center space-y-4 w-full max-w-md">
+                        <div className="bg-blue-100 p-4 rounded-lg shadow-md w-full text-center border-2 border-blue-300">
+                            <p className="font-bold text-blue-800 text-base sm:text-lg">1. Tópico Frasal</p>
+                            <p className="text-sm sm:text-base">A ideia principal do seu parágrafo.</p>
+                        </div>
+                        <div className="text-4xl text-gray-400">👇</div>
+                        <div className="bg-purple-100 p-4 rounded-lg shadow-md w-full text-center border-2 border-purple-300">
+                            <p className="font-bold text-purple-800 text-base sm:text-lg">2. Argumento de Autoridade (Citação)</p>
+                            <p className="text-sm sm:text-base">O trecho da entrevista (entre aspas) e quem falou.</p>
+                        </div>
+                        <div className="text-4xl text-gray-400">👇</div>
+                        <div className="bg-green-100 p-4 rounded-lg shadow-md w-full text-center border-2 border-green-300">
+                            <p className="font-bold text-green-800 text-base sm:text-lg">3. Análise / Explicação</p>
+                            <p className="text-sm sm:text-base">O que a citação significa e como ela prova sua ideia.</p>
+                        </div>
+                        <div className="text-4xl text-gray-400">👇</div>
+                        <div className="bg-yellow-100 p-4 rounded-lg shadow-md w-full text-center border-2 border-yellow-300">
+                            <p className="font-bold text-yellow-800 text-base sm:text-lg">4. Fechamento</p>
+                            <p className="text-sm sm:text-base">Uma frase que encerra o parágrafo.</p>
+                        </div>
+                    </div>
+
+                    <p className="mt-8 mb-4 text-center text-base sm:text-lg">Agora, vejam os exemplos completos de parágrafos:</p>
+
+                    <h3 className="text-xl font-semibold mb-2 text-blue-700">Exemplo 1: Visão Cautelosa da IA (usando Floridi)</h3>
+                    <div className="bg-gray-100 p-4 rounded-lg border border-gray-200 mb-4 w-full">
+                        <p className="font-bold mb-2 text-base sm:text-lg">Parágrafo de Desenvolvimento</p>
+                        <p className="text-sm sm:text-base">É fundamental que a sociedade aprofunde a discussão sobre os impactos da Inteligência Artificial, evitando uma visão simplista que ignora suas complexidades. Nesse sentido, o professor Luciano Floridi, especialista em ética digital, alerta que <strong>"a gente está abordando a IA de forma muito superficial, e as pessoas não estão aprofundando o suficiente"</strong>. Essa perspectiva ressalta a importância de ir além do uso prático da tecnologia, buscando compreender as implicações éticas e sociais que envolvem a IA, como a real capacidade de raciocínio das máquinas, que, segundo o próprio Floridi, ainda apresenta <strong>"ausência de raciocínio real"</strong>. Dessa forma, uma análise mais cuidadosa e menos apressada torna-se essencial para um desenvolvimento tecnológico mais responsável.</p>
+                    </div>
+                    <h3 className="text-xl font-semibold mb-2 text-blue-700">Exemplo 2: Visão Otimista da IA (usando o economista do Google)</h3>
+                    <div className="bg-gray-100 p-4 rounded-lg border border-gray-200 w-full">
+                        <p className="font-bold mb-2 text-base sm:text-lg">Parágrafo de Desenvolvimento</p>
+                        <p className="text-sm sm:text-base">A Inteligência Artificial representa uma revolução tecnológica com o potencial de impulsionar significativamente diversos setores da economia e da sociedade. Conforme apontado pelo economista-chefe do Google, a IA é <strong>"a mudança tecnológica mais emocionante"</strong> de sua vida, com impactos claros na eficiência, visto que <strong>"aumenta a eficiência dos desenvolvedores de software em 21%"</strong>. Tal dado demonstra o poder transformador da IA, que não apenas otimiza processos já existentes, mas também abre caminhos para o desenvolvimento de novas soluções, como a melhoria do acesso à educação e a resolução de problemas complexos, conforme o especialista. Portanto, a adoção e o investimento em IA configuram-se como estratégias promissoras para o avanço socioeconômico global.</p>
+                    </div>
+                </div>
+            )
+        },
+        {
+            title: "Exercício de Reconhecimento",
+            content: (
+                <div className="text-gray-700 p-4 sm:p-6">
+                    <p className="mb-4 text-center font-bold text-base sm:text-lg">Vamos ver se vocês entenderam direitinho! Respondam às perguntas:</p>
+
+                    {/* Q1: Objetivo do argumento de autoridade */}
+                    <div className="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
+                        <p className="font-semibold mb-2 text-base sm:text-lg">1. Qual é o objetivo principal de um argumento de autoridade em uma redação?</p>
+                        <div className="flex flex-col space-y-2">
+                            <label className="inline-flex items-center text-sm sm:text-base">
+                                <input type="radio" name="q1" value="a" checked={recognitionAnswers.q1 === 'a'} onChange={(e) => setRecognitionAnswers({ ...recognitionAnswers, q1: e.target.value })} className="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                <span className="ml-2">A) Deixar o texto mais longo.</span>
+                            </label>
+                            <label className="inline-flex items-center text-sm sm:text-base">
+                                <input type="radio" name="q1" value="b" checked={recognitionAnswers.q1 === 'b'} onChange={(e) => setRecognitionAnswers({ ...recognitionAnswers, q1: e.target.value })} className="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                <span className="ml-2">B) Provar um ponto com a fala de um especialista.</span>
+                            </label>
+                            <label className="inline-flex items-center text-sm sm:text-base">
+                                <input type="radio" name="q1" value="c" checked={recognitionAnswers.q1 === 'c'} onChange={(e) => setRecognitionAnswers({ ...recognitionAnswers, q1: e.target.value })} className="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                <span className="ml-2">C) Fazer o leitor rir.</span>
+                            </label>
+                        </div>
+                        <button onClick={() => { if (recognitionAnswers.q1 === 'b') { setRecognitionFeedback({ ...recognitionFeedback, q1: 'Correto! Muito bem!' }); } else { setRecognitionFeedback({ ...recognitionFeedback, q1: 'Ops! Tente novamente. O objetivo é dar força ao seu argumento.' }); } }} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
+                        {recognitionFeedback.q1 && <p className="mt-2 text-sm italic">{recognitionFeedback.q1}</p>}
+                    </div>
+
+                    {/* Q2: Visão do Professor Floridi */}
+                    <div className="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
+                        <p className="font-semibold mb-2 text-base sm:text-lg">2. O Professor Luciano Floridi tem uma visão mais otimista ou mais cautelosa sobre a IA?</p>
+                        <div className="flex flex-col space-y-2">
+                            <label className="inline-flex items-center text-sm sm:text-base">
+                                <input type="radio" name="q2" value="a" checked={recognitionAnswers.q2 === 'a'} onChange={(e) => setRecognitionAnswers({ ...recognitionAnswers, q2: e.target.value })} className="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                <span className="ml-2">A) Otimista.</span>
+                            </label>
+                            <label className="inline-flex items-center text-sm sm:text-base">
+                                <input type="radio" name="q2" value="b" checked={recognitionAnswers.q2 === 'b'} onChange={(e) => setRecognitionAnswers({ ...recognitionAnswers, q2: e.target.value })} className="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                <span className="ml-2">B) Cautelosa.</span>
+                            </label>
+                        </div>
+                        <button onClick={() => { if (recognitionAnswers.q2 === 'b') { setRecognitionFeedback({ ...recognitionFeedback, q2: 'Isso mesmo! Ele nos convida a pensar mais profundamente.' }); } else { setRecognitionFeedback({ ...recognitionFeedback, q2: 'Quase lá! Relembre a parte da aula sobre o Professor Floridi.' }); } }} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
+                        {recognitionFeedback.q2 && <p className="mt-2 text-sm italic">{recognitionFeedback.q2}</p>}
+                    </div>
+
+                    {/* Q3: Parte do parágrafo com ideia principal */}
+                    <div className="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
+                        <p className="font-semibold mb-2 text-base sm:text-lg">3. Qual parte do parágrafo de desenvolvimento apresenta a ideia principal?</p>
+                        <div className="flex flex-col space-y-2">
+                            <label className="inline-flex items-center text-sm sm:text-base">
+                                <input type="radio" name="q3" value="a" checked={recognitionAnswers.q3 === 'a'} onChange={(e) => setRecognitionAnswers({ ...recognitionAnswers, q3: e.target.value })} className="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                <span className="ml-2">A) O fechamento.</span>
+                            </label>
+                            <label className="inline-flex items-center text-sm sm:text-base">
+                                <input type="radio" name="q3" value="b" checked={recognitionAnswers.q3 === 'b'} onChange={(e) => setRecognitionAnswers({ ...recognitionAnswers, q3: e.target.value })} className="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                <span className="ml-2">B) O argumento de autoridade.</span>
+                            </label>
+                            <label className="inline-flex items-center text-sm sm:text-base">
+                                <input type="radio" name="q3" value="c" checked={recognitionAnswers.q3 === 'c'} onChange={(e) => setRecognitionAnswers({ ...recognitionAnswers, q3: e.target.value })} className="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                <span className="ml-2">C) O tópico frasal.</span>
+                            </label>
+                        </div>
+                        <button onClick={() => { if (recognitionAnswers.q3 === 'c') { setRecognitionFeedback({ ...recognitionFeedback, q3: 'Perfeito! O tópico frasal é a primeira frase e apresenta a ideia principal.' }); } else { setRecognitionFeedback({ ...recognitionFeedback, q3: 'Revise a estrutura do parágrafo! Pense na frase que "abre" a ideia.' }); } }} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
+                        {recognitionFeedback.q3 && <p className="mt-2 text-sm italic">{recognitionFeedback.q3}</p>}
+                    </div>
+
+                    {/* Q4: Verdadeiro ou Falso: Apenas citar é suficiente */}
+                    <div className="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
+                        <p className="font-semibold mb-2 text-base sm:text-lg">4. Verdadeiro ou Falso: Apenas citar um especialista é suficiente para um bom argumento de autoridade, sem precisar explicar a citação.</p>
+                        <div className="flex flex-col space-y-2">
+                            <label className="inline-flex items-center text-sm sm:text-base">
+                                <input type="radio" name="q4" value="true" checked={recognitionAnswers.q4 === 'true'} onChange={(e) => setRecognitionAnswers({ ...recognitionAnswers, q4: e.target.value })} className="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                <span className="ml-2">Verdadeiro</span>
+                            </label>
+                            <label className="inline-flex items-center text-sm sm:text-base">
+                                <input type="radio" name="q4" value="false" checked={recognitionAnswers.q4 === 'false'} onChange={(e) => setRecognitionAnswers({ ...recognitionAnswers, q4: e.target.value })} className="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                <span className="ml-2">Falso</span>
+                            </label>
+                        </div>
+                        <button onClick={() => { if (recognitionAnswers.q4 === 'false') { setRecognitionFeedback({ ...recognitionFeedback, q4: 'Correto! É fundamental explicar a citação para conectá-la ao seu argumento.' }); } else { setRecognitionFeedback({ ...recognitionFeedback, q4: 'Ops! Lembre-se que a análise da citação é crucial.' }); } }} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
+                        {recognitionFeedback.q4 && <p className="mt-2 text-sm italic">{recognitionFeedback.q4}</p>}
+                    </div>
+
+                    {/* Q5: Função da Análise/Explicação */}
+                    <div className="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
+                        <p className="font-semibold mb-2 text-base sm:text-lg">5. Qual das opções abaixo melhor descreve a função da "Análise/Explicação" em um parágrafo de desenvolvimento?</p>
+                        <div className="flex flex-col space-y-2">
+                            <label className="inline-flex items-center text-sm sm:text-base">
+                                <input type="radio" name="q5" value="a" checked={recognitionAnswers.q5 === 'a'} onChange={(e) => setRecognitionAnswers({ ...recognitionAnswers, q5: e.target.value })} className="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                <span className="ml-2">A) Apresentar um novo argumento não relacionado à citação.</span>
+                            </label>
+                            <label className="inline-flex items-center text-sm sm:text-base">
+                                <input type="radio" name="q5" value="b" checked={recognitionAnswers.q5 === 'b'} onChange={(e) => setRecognitionAnswers({ ...recognitionAnswers, q5: e.target.value })} className="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                <span className="ml-2">B) Explicar o significado da citação e como ela se relaciona com a ideia principal do parágrafo.</span>
+                            </label>
+                            <label className="inline-flex items-center text-sm sm:text-base">
+                                <input type="radio" name="q5" value="c" checked={recognitionAnswers.q5 === 'c'} onChange={(e) => setRecognitionAnswers({ ...recognitionAnswers, q5: e.target.value })} className="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                <span className="ml-2">C) Resumir todo o texto da redação.</span>
+                            </label>
+                        </div>
+                        <button onClick={() => { if (recognitionAnswers.q5 === 'b') { setRecognitionFeedback({ ...recognitionFeedback, q5: 'Exato! A análise é a sua "conversa" com a citação.' }); } else { setRecognitionFeedback({ ...recognitionFeedback, q5: 'Pense na função de ligar a citação ao seu argumento.' }); } }} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
+                        {recognitionFeedback.q5 && <p className="mt-2 text-sm italic">{recognitionFeedback.q5}</p>}
+                    </div>
+
+                    {/* Q6: Escolha do especialista para defender benefícios da IA */}
+                    <div className="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
+                        <p className="font-semibold mb-2 text-base sm:text-lg">6. Se você fosse escrever um parágrafo defendendo que a IA pode trazer muitos benefícios para a sociedade, qual dos especialistas seria mais adequado para citar?</p>
+                        <div className="flex flex-col space-y-2">
+                            <label className="inline-flex items-center text-sm sm:text-base">
+                                <input type="radio" name="q6" value="a" checked={recognitionAnswers.q6 === 'a'} onChange={(e) => setRecognitionAnswers({ ...recognitionAnswers, q6: e.target.value })} className="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                <span className="ml-2">A) O Professor Luciano Floridi.</span>
+                            </label>
+                            <label className="inline-flex items-center text-sm sm:text-base">
+                                <input type="radio" name="q6" value="b" checked={recognitionAnswers.q6 === 'b'} onChange={(e) => setRecognitionAnswers({ ...recognitionAnswers, q6: e.target.value })} className="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                <span className="ml-2">B) O Economista-Chefe do Google.</span>
+                            </label>
+                            <label className="inline-flex items-center text-sm sm:text-base">
+                                <input type="radio" name="q6" value="c" checked={recognitionAnswers.q6 === 'c'} onChange={(e) => setRecognitionAnswers({ ...recognitionAnswers, q6: e.target.value })} className="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                <span className="ml-2">C) Ambos, pois eles têm a mesma opinião.</span>
+                            </label>
+                        </div>
+                        <button onClick={() => { if (recognitionAnswers.q6 === 'b') { setRecognitionFeedback({ ...recognitionFeedback, q6: 'Isso! O Economista-Chefe do Google tem uma visão mais otimista, ideal para defender os benefícios.' }); } else { setRecognitionFeedback({ ...recognitionFeedback, q6: 'Pense na principal diferença de opinião entre eles.' }); } }} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
+                        {recognitionFeedback.q6 && <p className="mt-2 text-sm italic">{recognitionFeedback.q6}</p>}
+                    </div>
+                </div>
+            )
+        },
+        {
+            title: "Exercício de Arrastar e Soltar: Construindo Parágrafos!",
+            content: (
+                <div className="text-gray-700 p-4 sm:p-6">
+                    <p className="mb-4 text-center text-base sm:text-lg">Chegou a hora de vocês mostrarem o que aprenderam! Abaixo, vocês encontrarão frases embaralhadas de parágrafos de desenvolvimento. Sua tarefa é <strong>arrastar e soltar</strong> as frases na ordem correta para montar o parágrafo. Lembrem-se da estrutura: Tópico Frasal, Argumento de Autoridade, Análise/Explicação e Fechamento.</p>
+                    <p className="mb-6 font-bold text-red-600 text-center text-base sm:text-lg">Dica: Arrastem as frases da esquerda para a área de "Parágrafo Montado" na ordem que acharem correta!</p>
+
+                    {dragDropParagraphs.map((para, paraIndex) => (
+                        <div key={para.id} className="bg-white p-6 rounded-lg shadow-md mb-8 border border-gray-200">
+                            <h3 className="text-xl font-semibold mb-4 text-blue-700 text-center">{para.title}</h3>
+                            <div className="flex flex-col md:flex-row gap-6">
+                                {/* Draggable phrases area */}
+                                <div className="flex-1 bg-gray-50 p-4 rounded-md border border-gray-100 min-h-[150px] sm:min-h-[200px]">
+                                    <p className="font-semibold mb-2 text-gray-800 text-base sm:text-lg">Frases para Arrastar:</p>
+                                    {para.shuffledPhrases.length === 0 && para.droppedPhrases.length > 0 && (
+                                        <p className="text-gray-500 italic text-sm sm:text-base">Todas as frases foram arrastadas.</p>
+                                    )}
+                                    {para.shuffledPhrases.map((phrase, index) => (
+                                        <div
+                                            key={index}
+                                            draggable
+                                            onDragStart={(e) => {
+                                                e.dataTransfer.setData('text/plain', phrase);
+                                                e.dataTransfer.effectAllowed = 'move';
+                                            }}
+                                            className="bg-purple-100 text-purple-800 p-3 mb-2 rounded-md cursor-grab active:cursor-grabbing shadow-sm hover:bg-purple-200 transition-colors text-sm sm:text-base"
+                                        >
+                                            {phrase}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Drop area */}
+                                <div
+                                    className="flex-1 bg-green-50 p-4 rounded-md border border-green-200 min-h-[150px] sm:min-h-[200px]"
+                                    onDragOver={(e) => e.preventDefault()} // Allow drop
+                                    onDrop={(e) => {
+                                        e.preventDefault();
+                                        const droppedPhrase = e.dataTransfer.getData('text/plain');
+                                        const updatedParagraphs = [...dragDropParagraphs];
+                                        const currentPara = updatedParagraphs[paraIndex];
+
+                                        // Ensure the phrase is not already in droppedPhrases
+                                        if (!currentPara.droppedPhrases.includes(droppedPhrase)) {
+                                            currentPara.droppedPhrases.push(droppedPhrase);
+                                            currentPara.shuffledPhrases = currentPara.shuffledPhrases.filter(p => p !== droppedPhrase);
+                                            setDragDropParagraphs(updatedParagraphs);
+                                        }
+                                    }}
+                                >
+                                    <p className="font-semibold mb-2 text-gray-800 text-base sm:text-lg">Parágrafo Montado:</p>
+                                    {para.droppedPhrases.length === 0 ? (
+                                        <p className="text-gray-500 italic text-sm sm:text-base">Arraste as frases para cá...</p>
+                                    ) : (
+                                        para.droppedPhrases.map((phrase, index) => (
+                                            <div key={index} className="bg-green-100 text-green-800 p-3 mb-2 rounded-md shadow-sm text-sm sm:text-base">
+                                                {phrase}
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-2 mt-4">
+                                <button
+                                    onClick={() => {
+                                        const updatedParagraphs = [...dragDropParagraphs];
+                                        const currentPara = updatedParagraphs[paraIndex];
+                                        currentPara.droppedPhrases = [];
+                                        currentPara.shuffledPhrases = [...currentPara.correctOrder].sort(() => Math.random() - 0.5);
+                                        currentPara.feedback = '';
+                                        setDragDropParagraphs(updatedParagraphs);
+                                    }}
+                                    className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors shadow-md text-sm sm:text-base"
+                                >
+                                    Reiniciar
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const updatedParagraphs = [...dragDropParagraphs];
+                                        const currentPara = updatedParagraphs[paraIndex];
+                                        const isCorrect = JSON.stringify(currentPara.droppedPhrases) === JSON.stringify(currentPara.correctOrder);
+                                        currentPara.feedback = isCorrect ? '🎉 Parabéns! Parágrafo montado corretamente!' : '🤔 Quase lá! A ordem ainda não está perfeita. Tente novamente!';
+                                        setDragDropParagraphs(updatedParagraphs);
+                                    }}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base"
+                                >
+                                    Verificar
+                                </button>
+                            </div>
+                            {para.feedback && (
+                                <p className={`mt-2 text-center font-bold text-sm sm:text-base ${para.feedback.includes('Parabéns') ? 'text-green-700' : 'text-red-600'}`}>
+                                    {para.feedback}
+                                </p>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )
+        },
+        {
+            title: "Ferramentas Gemini para Redação ✨",
+            content: (
+                <div className="text-gray-700 flex flex-col items-center p-4 sm:p-6">
+                    <p className="mb-6 text-center text-base sm:text-lg">Que tal usar a Inteligência Artificial para te ajudar a escrever? Experimente estas ferramentas!</p>
+
+                    {/* Gerar Tópico Frasal */}
+                    <div className="bg-purple-50 p-6 rounded-lg shadow-md mb-8 w-full border border-purple-200">
+                        <h3 className="text-xl font-semibold mb-4 text-purple-700 text-center">Gerar Tópico Frasal ✨</h3>
+                        <p className="mb-2 text-sm text-center sm:text-base">Digite um tema geral para o seu parágrafo e a IA vai sugerir um tópico frasal.</p>
+                        <input
+                            type="text"
+                            value={topicTheme}
+                            onChange={(e) => setTopicTheme(e.target.value)}
+                            placeholder="Ex: Impacto da tecnologia na educação"
+                            className="w-full p-3 rounded-md border border-gray-300 mb-3 focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm sm:text-base"
+                        />
+                        <button
+                            onClick={generateTopicFrasal}
+                            disabled={generatingTopic}
+                            className="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
+                        >
+                            {generatingTopic ? (
+                                <>
+                                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Gerando...
+                                </>
+                            ) : (
+                                'Gerar Tópico Frasal ✨'
+                            )}
+                        </button>
+                        {generatedTopic && (
+                            <div className="mt-4 p-3 bg-purple-100 rounded-md border border-purple-300 text-purple-900 text-sm sm:text-base">
+                                <p className="font-semibold">Seu Tópico Frasal Sugerido:</p>
+                                <p>{generatedTopic}</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Expandir Análise */}
+                    <div className="bg-teal-50 p-6 rounded-lg shadow-md w-full border border-teal-200">
+                        <h3 className="text-xl font-semibold mb-4 text-teal-700 text-center">Expandir Análise ✨</h3>
+                        <p className="mb-2 text-sm text-center sm:text-base">Cole uma citação e digite sua ideia inicial para a análise. A IA vai te ajudar a expandir!</p>
+                        <textarea
+                            value={analysisCitation}
+                            onChange={(e) => setAnalysisCitation(e.target.value)}
+                            placeholder="Cole a citação aqui (Ex: 'A IA é a mudança tecnológica mais emocionante...')"
+                            rows="2"
+                            className="w-full p-3 rounded-md border border-gray-300 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-400 text-sm sm:text-base"
+                        ></textarea>
+                        <textarea
+                            value={analysisIdea}
+                            onChange={(e) => setAnalysisIdea(e.target.value)}
+                            placeholder="Sua ideia inicial para a análise (Ex: 'Isso mostra como a IA é importante para o futuro.')"
+                            rows="2"
+                            className="w-full p-3 rounded-md border border-gray-300 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-400 text-sm sm:text-base"
+                        ></textarea>
+                        <button
+                            onClick={expandAnalysis}
+                            disabled={expandingAnalysis}
+                            className="w-full px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
+                        >
+                            {expandingAnalysis ? (
+                                <>
+                                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Expandindo...
+                                </>
+                            ) : (
+                                'Expandir Análise ✨'
+                            )}
+                        </button>
+                        {expandedAnalysis && (
+                            <div className="mt-4 p-3 bg-teal-100 rounded-md border border-teal-300 text-teal-900 text-sm sm:text-base">
+                                <p className="font-semibold">Análise Expandida:</p>
+                                <p>{expandedAnalysis}</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )
+        }
+    ];
+
+    // Function to navigate to the next step
+    const nextStep = () => {
+        if (currentStep < steps.length - 1) {
+            setCurrentStep(currentStep + 1);
+        }
+    };
+
+    // Function to navigate to the previous step
+    const prevStep = () => {
+        if (currentStep > 0) {
+            setCurrentStep(currentStep - 1);
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 p-4 font-sans flex flex-col items-center relative"> {/* Added relative to main container */}
+            {/* Left Navigation Arrow */}
+            {currentStep > 0 && (
+                <button
+                    onClick={prevStep}
+                    className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 z-10 p-2 sm:p-3 bg-gray-300 text-gray-800 rounded-full shadow-md hover:bg-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    aria-label="Anterior"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                </button>
+            )}
+
+            {/* Main content card */}
+            <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl p-4 sm:p-8 flex flex-col flex-grow max-h-[90vh] overflow-hidden"> {/* Adjusted max-h */}
+                <h1 className="text-2xl sm:text-4xl font-extrabold text-center text-blue-800 mb-4 sm:mb-6 leading-tight">
+                    Aula de Redação: Argumento de Autoridade
+                </h1>
+                <h2 className="text-xl sm:text-2xl font-bold text-center text-purple-700 mb-6 sm:mb-8">
+                    {steps[currentStep].title}
+                </h2>
+
+                {/* Scrollable content area */}
+                <div className="flex-grow overflow-y-auto pb-4"> {/* Removed pb-4 from here, added to parent of lesson-content */}
+                    <div className="lesson-content"> {/* Removed mb-6 sm:mb-8 */}
+                        {steps[currentStep].content}
+                    </div>
+                </div>
+            </div>
+
+            {/* Right Navigation Arrow */}
+            {currentStep < steps.length - 1 && (
+                <button
+                    onClick={nextStep}
+                    className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 z-10 p-2 sm:p-3 bg-gray-300 text-gray-800 rounded-full shadow-md hover:bg-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    aria-label="Próximo"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                    </svg>
+                </button>
+            )}
+
+            {/* Footer */}
+            <footer className="mt-auto py-4 text-center text-gray-600 text-sm w-full">
+                Desenvolvido pelo Prof. Sheltom de Aragão
+            </footer>
+        </div>
+    );
+};
+
+export default App;
