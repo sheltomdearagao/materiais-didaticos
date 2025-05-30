@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo da Redação: A Trilha da Autoridade</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos personalizados para o jogo */
+        body {
+            font-family: 'Inter', sans-serif; /* Fonte padrão, pode ser substituída por uma "pixel art" via CDN se desejado */
+        }
+        .game-button {
+            @apply px-6 py-3 rounded-full shadow-lg transition-all duration-200 flex items-center justify-center gap-2 font-bold text-lg;
+            background: linear-gradient(145deg, #6a0dad, #8a2be2); /* Gradiente roxo */
+            color: white;
+            border: 2px solid #5a0a9a;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .game-button:hover {
+            background: linear-gradient(145deg, #8a2be2, #6a0dad);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .game-button:disabled {
+            background: #cccccc;
+            border-color: #999999;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            text-shadow: none;
+        }
+        .nav-arrow {
+            @apply p-3 sm:p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-300;
+        }
+        .nav-arrow:disabled {
+            @apply bg-gray-400 text-gray-700 cursor-not-allowed shadow-md hover:bg-gray-400 focus:ring-0;
+        }
+
+        /* Estilos para o exercício de clique-para-transferir */
+        .phrase-item {
+            cursor: pointer;
+            transition: background-color 0.15s ease-in-out, opacity 0.15s ease-in-out, transform 0.15s ease-in-out;
+            @apply bg-purple-100 text-purple-800 p-3 mb-2 rounded-md shadow-sm;
+        }
+        .phrase-item:hover {
+            @apply bg-purple-200 transform scale-[1.02];
+        }
+        .phrase-item.transferred {
+            cursor: default;
+            @apply bg-green-100 text-green-800;
+            transform: none;
+        }
+        .phrase-item.hidden-transferred {
+            display: none; /* Esconde a frase quando transferida */
+        }
+        .feedback-message {
+            @apply mt-2 text-center font-bold text-sm sm:text-base;
+        }
+        .feedback-correct {
+            @apply text-green-700;
+        }
+        .feedback-incorrect {
+            @apply text-red-600;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 p-4 font-sans flex flex-col items-center">
+
+    <button id="prevBtn" class="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 z-10 nav-arrow" aria-label="Missão Anterior">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+        </svg>
+    </button>
+
+    <div id="gameCard" class="w-full max-w-4xl bg-white rounded-2xl shadow-xl p-4 sm:p-8 flex flex-col flex-grow max-h-[95vh] overflow-hidden">
+        <h1 class="text-2xl sm:text-4xl font-extrabold text-center text-blue-800 mb-4 sm:mb-6 leading-tight">
+            Jogo da Redação: A Trilha da Autoridade 🗺️
+        </h1>
+        <h2 id="missionTitle" class="text-xl sm:text-2xl font-bold text-center text-purple-700 mb-6 sm:mb-8"></h2>
+
+        <div id="missionContentContainer" class="flex-grow overflow-y-auto pb-4">
+            <div id="missionContent" class="lesson-content text-gray-700">
+                </div>
+        </div>
+    </div>
+
+    <button id="nextBtn" class="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 z-10 nav-arrow" aria-label="Próxima Missão">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+        </svg>
+    </button>
+
+    <footer class="mt-auto py-4 text-center text-gray-600 text-sm w-full">
+        Desenvolvido pelo Prof. Sheltom de Aragão
+    </footer>
+
+    <script>
+        // --- Dados do Jogo (Missões) ---
+        const missionsData = [
+            {
+                title: "Missão 1: Boas-Vindas à Trilha! 👋",
+                content: `
+                    <div class="flex flex-col items-center p-4 sm:p-6">
+                        <div class="text-6xl text-blue-600 mb-4">
+                            🎮
+                        </div>
+                        <p class="mb-4 text-center text-base sm:text-lg">Olá, aventureiro(a)! Prepare-se para embarcar em uma jornada épica no mundo da redação.</p>
+                        <p class="mb-4 text-center text-base sm:text-lg">Nesta trilha, você vai descobrir um superpoder para deixar seus textos imbatíveis: o <strong>Argumento de Autoridade</strong>!</p>
+                        <p class="text-center text-base sm:text-lg">Vamos explorar como usar a opinião de grandes pensadores e especialistas para dar força às suas ideias. Cada estação é um desafio, e ao final, você será um mestre da argumentação!</p>
+                    </div>
+                `
+            },
+            {
+                title: "Missão 2: O que é Argumento de Autoridade? 🤔",
+                content: `
+                    <div class="p-4 sm:p-6">
+                        <p class="mb-4 text-base sm:text-lg">Imagine que você está em uma discussão. Se você disser "Eu acho que o céu é azul", é sua opinião. Mas se você disser "O professor de Ciências disse que o céu é azul por causa da dispersão da luz solar", sua fala ganha muito mais força, não é?</p>
+                        <p class="mb-4 text-base sm:text-lg">É exatamente isso! Um <strong>Argumento de Autoridade</strong> é quando usamos a fala (uma <strong>citação</strong>) de alguém que é um <strong>especialista</strong> no assunto, ou que tem muito conhecimento e respeito sobre o tema, para provar nosso ponto de vista.</p>
+                        <h3 class="text-xl font-semibold mb-2 text-blue-700">Por que usar esse poder?</h3>
+                        <ul class="list-disc list-inside mb-4 ml-4 text-base sm:text-lg">
+                            <li>Dá <strong>confiança</strong> e credibilidade ao seu texto.</li>
+                            <li>Mostra que você <strong>pesquisou</strong> e não tirou a ideia do nada.</li>
+                            <li>Deixa sua opinião muito mais <strong>forte</strong> e difícil de ser contestada.</li>
+                        </ul>
+                        <p class="text-base sm:text-lg"><strong>Exemplo Rápido:</strong> Se você fala sobre saúde, citar um médico famoso ou um estudo científico dá muito mais peso do que apenas dizer "eu acho que é bom para a saúde".</p>
+                    </div>
+                `
+            },
+            {
+                title: "Missão 3: Nossas Fontes de Autoridade 🎤",
+                content: `
+                    <div class="p-4 sm:p-6">
+                        <p class="mb-6 text-center text-base sm:text-lg">Para esta trilha, vamos usar um tema super atual: a <strong>Inteligência Artificial (IA)</strong>. Será que a IA é só boa ou temos que ter cuidado? Conheça nossos especialistas:</p>
+
+                        <div class="flex flex-col md:flex-row gap-6">
+                            <div class="flex-1 bg-red-50 p-4 rounded-lg border border-red-200 shadow-md flex flex-col items-center text-center">
+                                <div class="text-4xl text-red-600 mb-2">
+                                    ⚠️
+                                </div>
+                                <h3 class="text-xl font-semibold mb-2 text-red-700">Professor Luciano Floridi</h3>
+                                <p class="font-bold text-red-800 mb-2 text-base sm:text-lg">Visão Cautelosa</p>
+                                <ul class="list-none p-0 m-0 text-sm sm:text-base">
+                                    <li class="mb-1">"A gente está abordando a IA de forma muito superficial."</li>
+                                    <li>"Nos programas de IA atuais... falta um 'raciocínio de verdade'."</li>
+                                </ul>
+                                <p class="text-xs italic mt-2 sm:text-sm">Ele nos convida a pensar mais a fundo, sem se deixar enganar pela superfície.</p>
+                            </div>
+
+                            <div class="flex-1 bg-green-50 p-4 rounded-lg border border-green-200 shadow-md flex flex-col items-center text-center">
+                                <div class="text-4xl text-green-600 mb-2">
+                                    ✨
+                                </div>
+                                <h3 class="text-xl font-semibold mb-2 text-green-700">Economista-Chefe do Google</h3>
+                                <p class="font-bold text-green-800 mb-2 text-base sm:text-lg">Visão Otimista</p>
+                                <ul class="list-none p-0 m-0 text-sm sm:text-base">
+                                    <li class="mb-1">"A IA é 'a mudança tecnológica mais emocionante'."</li>
+                                    <li class="mb-1">"A IA aumenta a eficiência... em 21% [e] 40%."</li>
+                                    <li>"Pode criar mais oportunidades de trabalho."</li>
+                                </ul>
+                                <p class="text-xs italic mt-2 sm:text-sm">Ele vê a IA como uma força transformadora e cheia de novas possibilidades.</p>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Missão 4: A Estrutura Mágica do Parágrafo ✨",
+                content: `
+                    <div class="p-4 sm:p-6">
+                        <p class="mb-6 text-center text-base sm:text-lg">Para usar a fala de um especialista, seu parágrafo precisa de uma estrutura clara. Vejam o esquema:</p>
+
+                        <div class="flex flex-col items-center space-y-4 w-full max-w-md mx-auto">
+                            <div class="bg-blue-100 p-4 rounded-lg shadow-md w-full text-center border-2 border-blue-300">
+                                <p class="font-bold text-blue-800 text-base sm:text-lg">1. Tópico Frasal</p>
+                                <p class="text-sm sm:text-base">A ideia principal do seu parágrafo.</p>
+                            </div>
+                            <div class="text-4xl text-gray-400">👇</div>
+                            <div class="bg-purple-100 p-4 rounded-lg shadow-md w-full text-center border-2 border-purple-300">
+                                <p class="font-bold text-purple-800 text-base sm:text-lg">2. Argumento de Autoridade (Citação)</p>
+                                <p class="text-sm sm:text-base">A fala exata do especialista (entre aspas) e quem falou.</p>
+                            </div>
+                            <div class="text-4xl text-gray-400">👇</div>
+                            <div class="bg-green-100 p-4 rounded-lg shadow-md w-full text-center border-2 border-green-300">
+                                <p class="font-bold text-green-800 text-base sm:text-lg">3. Análise / Explicação</p>
+                                <p class="text-sm sm:text-base">O que a citação significa e como ela prova sua ideia.</p>
+                            </div>
+                            <div class="text-4xl text-gray-400">👇</div>
+                            <div class="bg-yellow-100 p-4 rounded-lg shadow-md w-full text-center border-2 border-yellow-300">
+                                <p class="font-bold text-yellow-800 text-base sm:text-lg">4. Fechamento</p>
+                                <p class="text-sm sm:text-base">Uma frase que encerra o parágrafo.</p>
+                            </div>
+                        </div>
+
+                        <p class="mt-8 mb-4 text-center text-base sm:text-lg">Agora, vejam os exemplos completos de parágrafos:</p>
+
+                        <h3 class="text-xl font-semibold mb-2 text-blue-700">Exemplo 1: Visão Cautelosa da IA (usando Floridi)</h3>
+                        <div class="bg-gray-100 p-4 rounded-lg border border-gray-200 mb-4 w-full">
+                            <p class="font-bold mb-2 text-base sm:text-lg">Parágrafo de Desenvolvimento</p>
+                            <p class="text-sm sm:text-base">É fundamental que a sociedade aprofunde a discussão sobre os impactos da Inteligência Artificial, evitando uma visão simplista que ignora suas complexidades. Nesse sentido, o professor Luciano Floridi, especialista em ética digital, alerta que <strong>"a gente está abordando a IA de forma muito superficial, e as pessoas não estão aprofundando o suficiente"</strong>. Essa perspectiva ressalta a importância de ir além do uso prático da tecnologia, buscando compreender as implicações éticas e sociais que envolvem a IA, como a real capacidade de raciocínio das máquinas, que, segundo o próprio Floridi, ainda apresenta <strong>"ausência de raciocínio real"</strong>. Dessa forma, uma análise mais cuidadosa e menos apressada torna-se essencial para um desenvolvimento tecnológico mais responsável.</p>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2 text-blue-700">Exemplo 2: Visão Otimista da IA (usando o economista do Google)</h3>
+                        <div class="bg-gray-100 p-4 rounded-lg border border-gray-200 w-full">
+                            <p class="font-bold mb-2 text-base sm:text-lg">Parágrafo de Desenvolvimento</p>
+                            <p class="text-sm sm:text-base">A Inteligência Artificial representa uma revolução tecnológica com o potencial de impulsionar significativamente diversos setores da economia e da sociedade. Conforme apontado pelo economista-chefe do Google, a IA é <strong>"a mudança tecnológica mais emocionante"</strong> de sua vida, com impactos claros na eficiência, visto que <strong>"aumenta a eficiência dos desenvolvedores de software em 21%"</strong>. Tal dado demonstra o poder transformador da IA, que não apenas otimiza processos já existentes, mas também abre caminhos para o desenvolvimento de novas soluções, como a melhoria do acesso à educação e a resolução de problemas complexos, conforme o especialista. Portanto, a adoção e o investimento em IA configuram-se como estratégias promissoras para o avanço socioeconômico global.</p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Missão 5: Primeiros Passos (Fácil) ✅",
+                content: `
+                    <div class="p-4 sm:p-6">
+                        <p class="mb-4 text-center font-bold text-base sm:text-lg">Vamos ver se você entendeu as partes do parágrafo! Responda às perguntas:</p>
+
+                        <div class="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
+                            <p class="font-semibold mb-2 text-base sm:text-lg">1. Qual é o objetivo principal de um argumento de autoridade em uma redação?</p>
+                            <div class="flex flex-col space-y-2">
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q1" value="a" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">A) Deixar o texto mais longo.</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q1" value="b" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">B) Provar um ponto com a fala de um especialista.</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q1" value="c" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">C) Fazer o leitor rir.</span>
+                                </label>
+                            </div>
+                            <button onclick="checkRecognitionAnswer('q1')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
+                            <p id="feedback_q1" class="feedback-message"></p>
+                        </div>
+
+                        <div class="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
+                            <p class="font-semibold mb-2 text-base sm:text-lg">2. O Professor Luciano Floridi tem uma visão mais otimista ou mais cautelosa sobre a IA?</p>
+                            <div class="flex flex-col space-y-2">
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q2" value="a" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">A) Otimista.</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q2" value="b" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">B) Cautelosa.</span>
+                                </label>
+                            </div>
+                            <button onclick="checkRecognitionAnswer('q2')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
+                            <p id="feedback_q2" class="feedback-message"></p>
+                        </div>
+
+                        <div class="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
+                            <p class="font-semibold mb-2 text-base sm:text-lg">3. Qual parte do parágrafo de desenvolvimento apresenta a ideia principal?</p>
+                            <div class="flex flex-col space-y-2">
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q3" value="a" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">A) O fechamento.</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q3" value="b" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">B) O argumento de autoridade.</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q3" value="c" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">C) O tópico frasal.</span>
+                                </label>
+                            </div>
+                            <button onclick="checkRecognitionAnswer('q3')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
+                            <p id="feedback_q3" class="feedback-message"></p>
+                        </div>
+
+                        <div class="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
+                            <p class="font-semibold mb-2 text-base sm:text-lg">4. Verdadeiro ou Falso: Apenas citar um especialista é suficiente para um bom argumento de autoridade, sem precisar explicar a citação.</p>
+                            <div class="flex flex-col space-y-2">
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q4" value="true" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">Verdadeiro</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q4" value="false" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">Falso</span>
+                                </label>
+                            </div>
+                            <button onclick="checkRecognitionAnswer('q4')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
+                            <p id="feedback_q4" class="feedback-message"></p>
+                        </div>
+
+                        <div class="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
+                            <p class="font-semibold mb-2 text-base sm:text-lg">5. Qual das opções abaixo melhor descreve a função da "Análise/Explicação" em um parágrafo de desenvolvimento?</p>
+                            <div class="flex flex-col space-y-2">
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q5" value="a" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">A) Apresentar um novo argumento não relacionado à citação.</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q5" value="b" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">B) Explicar o significado da citação e como ela se relaciona com a ideia principal do parágrafo.</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q5" value="c" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">C) Resumir todo o texto da redação.</span>
+                                </label>
+                            </div>
+                            <button onclick="checkRecognitionAnswer('q5')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
+                            <p id="feedback_q5" class="feedback-message"></p>
+                        </div>
+
+                        <div class="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
+                            <p class="font-semibold mb-2 text-base sm:text-lg">6. Se você fosse escrever um parágrafo defendendo que a IA pode trazer muitos benefícios para a sociedade, qual dos especialistas seria mais adequado para citar?</p>
+                            <div class="flex flex-col space-y-2">
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q6" value="a" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">A) O Professor Luciano Floridi.</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q6" value="b" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">B) O Economista-Chefe do Google.</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q6" value="c" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">C) Ambos, pois eles têm a mesma opinião.</span>
+                                </label>
+                            </div>
+                            <button onclick="checkRecognitionAnswer('q6')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
+                            <p id="feedback_q6" class="feedback-message"></p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Missão 6: Completando o Parágrafo (Médio) 📝", // Nova Missão 6
+                content: `
+                    <div class="p-4 sm:p-6">
+                        <p class="mb-4 text-center font-bold text-base sm:text-lg">Escolha a frase que melhor completa a lacuna no parágrafo, garantindo coerência e sentido.</p>
+
+                        <div class="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
+                            <p class="font-semibold mb-2 text-base sm:text-lg">1. ________. Segundo o Professor Silva, 'a tecnologia transformou a comunicação de forma irreversível'. Essa afirmação destaca a profundidade das mudanças que a era digital trouxe para as interações humanas. Portanto, é inegável que a tecnologia redefiniu as relações sociais.</p>
+                            <div class="flex flex-col space-y-2">
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q10" value="a" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">A) A comunicação é muito importante hoje em dia.</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q10" value="b" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">B) A tecnologia tem impactado profundamente a forma como as pessoas se comunicam na sociedade moderna.</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q10" value="c" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">C) Muitas pessoas usam celulares para conversar.</span>
+                                </label>
+                            </div>
+                            <button onclick="checkRecognitionAnswer('q10')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
+                            <p id="feedback_q10" class="feedback-message"></p>
+                        </div>
+
+                        <div class="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
+                            <p class="font-semibold mb-2 text-base sm:text-lg">2. A sustentabilidade ambiental é um tema urgente que demanda ações imediatas. ________. Essa visão sublinha a importância de práticas que garantam o futuro do planeta para as próximas gerações. Desse modo, a conscientização ecológica é fundamental para a preservação dos recursos naturais.</p>
+                            <div class="flex flex-col space-y-2">
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q11" value="a" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">A) Eu acho que devemos cuidar do meio ambiente.</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q11" value="b" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">B) Um estudo recente mostrou que a poluição está aumentando.</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q11" value="c" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">C) Conforme a bióloga Dra. Ana Costa, 'a biodiversidade do planeta está em risco crítico devido à ação humana'.</span>
+                                </label>
+                            </div>
+                            <button onclick="checkRecognitionAnswer('q11')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
+                            <p id="feedback_q11" class="feedback-message"></p>
+                        </div>
+
+                        <div class="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
+                            <p class="font-semibold mb-2 text-base sm:text-lg">3. O acesso à informação é um direito fundamental na sociedade contemporânea. De acordo com o sociólogo Dr. João Pereira, 'a internet democratizou o conhecimento, mas também trouxe desafios de verificação'. ________. Assim, a educação digital é essencial para capacitar os indivíduos a navegar de forma crítica no ambiente online.</p>
+                            <div class="flex flex-col space-y-2">
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q12" value="a" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">A) A internet é muito legal e todo mundo usa.</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q12" value="b" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">B) Essa perspectiva revela que, embora a rede mundial de computadores tenha facilitado o acesso a dados, ela exige do usuário a capacidade de discernir entre informações verdadeiras e falsas.</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q12" value="c" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">C) O sociólogo gosta muito de internet.</span>
+                                </label>
+                            </div>
+                            <button onclick="checkRecognitionAnswer('q12')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
+                            <p id="feedback_q12" class="feedback-message"></p>
+                        </div>
+
+                        <div class="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
+                            <p class="font-semibold mb-2 text-base sm:text-lg">4. A leitura é uma ferramenta poderosa para o desenvolvimento do pensamento crítico. Segundo a escritora Clarice Lispector, 'ler é desvendar mundos e expandir a própria alma'. Essa citação enfatiza como o hábito de ler vai além da simples absorção de palavras, promovendo uma profunda transformação pessoal. ________.</p>
+                            <div class="flex flex-col space-y-2">
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q13" value="a" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">A) Ler é bom.</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q13" value="b" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">B) As pessoas deveriam ler mais livros.</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q13" value="c" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">C) Portanto, o incentivo à leitura desde cedo é crucial para formar cidadãos mais conscientes e reflexivos.</span>
+                                </label>
+                            </div>
+                            <button onclick="checkRecognitionAnswer('q13')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
+                            <p id="feedback_q13" class="feedback-message"></p>
+                        </div>
+
+                        <div class="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
+                            <p class="font-semibold mb-2 text-base sm:text-lg">5. A importância da atividade física para a saúde é inegável. ________. Essa afirmação destaca como o movimento regular é um pilar para a prevenção de doenças e para uma vida com mais qualidade. Desse modo, a inclusão de exercícios na rotina diária é um passo fundamental para o bem-estar geral.</p>
+                            <div class="flex flex-col space-y-2">
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q14" value="a" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">A) Muitos atletas treinam todos os dias.</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q14" value="b" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">B) De acordo com a Organização Mundial da Saúde (OMS), 'a inatividade física é um dos maiores fatores de risco para doenças crônicas não transmissíveis'.</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q14" value="c" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">C) É bom fazer exercícios para ficar forte.</span>
+                                </label>
+                            </div>
+                            <button onclick="checkRecognitionAnswer('q14')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
+                            <p id="feedback_q14" class="feedback-message"></p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Missão 7: Desafios Avançados (Difícil) 🧠",
+                content: `
+                    <div class="p-4 sm:p-6">
+                        <p class="mb-6 text-center text-base sm:text-lg">Chegamos aos desafios mais difíceis! Teste sua compreensão sobre o uso de argumentos de autoridade e a análise de informações.</p>
+
+                        <div class="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
+                            <p class="font-semibold mb-2 text-base sm:text-lg">1. Você está escrevendo sobre como a IA pode ajudar a resolver problemas complexos, como doenças. Qual citação seria mais adequada para usar como argumento de autoridade?</p>
+                            <div class="flex flex-col space-y-2">
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q7" value="a" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">A) "A gente está abordando a IA de forma muito superficial." (Floridi)</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q7" value="b" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">B) "A IA é 'a mudança tecnológica mais emocionante'." (Economista do Google)</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q7" value="c" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">C) "Nos programas de IA atuais... falta um 'raciocínio de verdade'." (Floridi)</span>
+                                </label>
+                            </div>
+                            <button onclick="checkRecognitionAnswer('q7')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
+                            <p id="feedback_q7" class="feedback-message"></p>
+                        </div>
+
+                        <div class="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
+                            <p class="font-semibold mb-2 text-base sm:text-lg">2. Um especialista diz: "A IA tem o potencial de automatizar tarefas repetitivas, liberando humanos para trabalhos mais criativos." Qual a melhor análise para essa citação em um parágrafo que defende os benefícios da IA?</p>
+                            <div class="flex flex-col space-y-2">
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q8" value="a" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">A) Isso mostra que a IA vai tirar todos os empregos e causar desemprego em massa.</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q8" value="b" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">B) A fala do especialista indica que a IA pode melhorar a qualidade do trabalho humano, focando em atividades que exigem mais criatividade e menos repetição.</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q8" value="c" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">C) O especialista não entende de IA, pois a criatividade também pode ser automatizada.</span>
+                                </label>
+                            </div>
+                            <button onclick="checkRecognitionAnswer('q8')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
+                            <p id="feedback_q8" class="feedback-message"></p>
+                        </div>
+
+                         <div class="bg-blue-50 p-4 rounded-lg mb-6 shadow-sm">
+                            <p class="font-semibold mb-2 text-base sm:text-lg">3. Leia o parágrafo abaixo. Qual frase seria o Tópico Frasal?</p>
+                            <p class="mb-2 text-sm italic">"A educação, na era digital, enfrenta o desafio de preparar os alunos para um mundo em constante mudança. Segundo a pedagoga Maria Silva, 'é fundamental que as escolas desenvolvam o pensamento crítico e a capacidade de resolver problemas, e não apenas memorizar conteúdos'. Essa visão reforça a necessidade de um ensino mais dinâmico, que vá além do tradicional e prepare os estudantes para os desafios do futuro. Portanto, a inovação pedagógica é crucial para o sucesso educacional."</p>
+                            <div class="flex flex-col space-y-2">
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q9" value="a" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">A) "Segundo a pedagoga Maria Silva, 'é fundamental que as escolas desenvolvam o pensamento crítico e a capacidade de resolver problemas, e não apenas memorizar conteúdos'."</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q9" value="b" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">B) "A educação, na era digital, enfrenta o desafio de preparar os alunos para um mundo em constante mudança."</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm sm:text-base">
+                                    <input type="radio" name="q9" value="c" class="form-radio text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span class="ml-2">C) "Portanto, a inovação pedagógica é crucial para o sucesso educacional."</span>
+                                </label>
+                            </div>
+                            <button onclick="checkRecognitionAnswer('q9')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base">Verificar</button>
+                            <p id="feedback_q9" class="feedback-message"></p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "Missão Final: Conectando os Pontos 🏁",
+                content: `
+                    <div class="flex flex-col items-center p-4 sm:p-6">
+                        <div class="text-6xl text-purple-600 mb-4">
+                            🏆
+                        </div>
+                        <p class="mb-4 text-center text-base sm:text-lg">Parabéns, campeão(ã)! Você chegou ao final da nossa trilha de aprendizado sobre o Argumento de Autoridade.</p>
+                        <p class="mb-4 text-center text-base sm:text-lg">Agora você sabe que:</p>
+                        <ul class="list-disc list-inside mb-4 ml-4 text-base sm:text-lg">
+                            <li>Usar a fala de especialistas deixa seu texto muito mais <strong>forte e confiável</strong>.</li>
+                            <li>É importante <strong>escolher bem</strong> qual especialista citar, de acordo com a sua opinião.</li>
+                            <li>A <strong>estrutura</strong> do parágrafo (Tópico Frasal, Citação, Análise e Fechamento) é a chave para um bom argumento.</li>
+                            <li>A prática leva à perfeição!</li>
+                        </ul>
+                        <p class="text-center text-base sm:text-lg">Continue praticando, lendo entrevistas e pensando em como as opiniões dos especialistas podem enriquecer seus próprios textos. A escrita é uma jornada contínua, e você está no caminho certo!</p>
+                        <p class="mt-6 text-center text-xl font-bold text-blue-700">Até a próxima aventura!</p>
+                    </div>
+                `
+            }
+        ];
+
+        let currentMissionIndex = 0; // Estado global para o índice da missão atual
+
+        // Elementos DOM
+        const missionTitleElement = document.getElementById('missionTitle');
+        const missionContentElement = document.getElementById('missionContent');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        // Respostas corretas para o quiz de reconhecimento (atualizadas com novas perguntas)
+        const recognitionAnswers = {
+            q1: 'b', // Objetivo do argumento de autoridade
+            q2: 'b', // Visão do Professor Floridi
+            q3: 'c', // Parte do parágrafo com ideia principal
+            q4: 'false', // Apenas citar é suficiente?
+            q5: 'b', // Função da Análise/Explicação
+            q6: 'b', // Escolha do especialista para defender benefícios da IA
+            q7: 'b', // Cenário e escolha da citação mais adequada
+            q8: 'b', // Análise de uma citação implícita
+            q9: 'b', // Identificar Tópico Frasal em contexto
+            q10: 'b', // Completando o Parágrafo Q1
+            q11: 'c', // Completando o Parágrafo Q2
+            q12: 'b', // Completando o Parágrafo Q3
+            q13: 'c', // Completando o Parágrafo Q4
+            q14: 'b'  // Completando o Parágrafo Q5
+        };
+
+        // Dados para o exercício de Clique-para-Transferir
+        const paragraphData = [
+            {
+                id: 'p1',
+                title: 'Parágrafo 1: Visão Cautelosa da IA',
+                correctOrder: [
+                    "É fundamental que a sociedade aprofunde a discussão sobre os impactos da Inteligência Artificial, evitando uma visão simplista que ignora suas complexidades.",
+                    "Nesse sentido, o professor Luciano Floridi, especialista em ética digital, alerta que \"a gente está abordando a IA de forma muito superficial, e as pessoas não estão aprofundando o suficiente\".",
+                    "Essa perspectiva ressalta a importância de ir além do uso prático da tecnologia, buscando compreender as implicações éticas e sociais que envolvem a IA, como a real capacidade de raciocínio das máquinas, que, segundo o próprio Floridi, ainda apresenta \"ausência de raciocínio real\".",
+                    "Dessa forma, uma análise mais cuidadosa e menos apressada torna-se essencial para um desenvolvimento tecnológico mais responsável."
+                ]
+            },
+            {
+                id: 'p2',
+                title: 'Parágrafo 2: Visão Otimista da IA',
+                correctOrder: [
+                    "A Inteligência Artificial representa uma revolução tecnológica com o potencial de impulsionar significativamente diversos setores da economia e da sociedade.",
+                    "Conforme apontado pelo economista-chefe do Google, a IA é \"a mudança tecnológica mais emocionante\" de sua vida, com impactos claros na eficiência, visto que \"aumenta a eficiência dos desenvolvedores de software em 21%\".",
+                    "Tal dado demonstra o poder transformador da IA, que não apenas otimiza processos já existentes, mas também abre caminhos para o desenvolvimento de novas soluções, como a melhoria do acesso à educação e a resolução de problemas complexos, conforme o especialista.",
+                    "Portanto, a adoção e o investimento em IA configuram-se como estratégias promissoras para o avanço socioeconômico global."
+                ]
+            },
+            {
+                id: 'p3',
+                title: 'Parágrafo 3: A IA e o Futuro do Trabalho',
+                correctOrder: [
+                    "O impacto da Inteligência Artificial no mercado de trabalho é um tema de constante debate, gerando tanto preocupação quanto otimismo sobre o futuro das profissões.",
+                    "De um lado, especialistas como o economista-chefe do Google defendem que a IA \"pode criar mais oportunidades de trabalho do que tirar, se as regras certas forem criadas\", sugerindo um cenário de adaptação e novas funções.",
+                    "Contudo, a transição para esse novo panorama exige investimento em qualificação e políticas públicas que garantam a inclusão, evitando que a automação aprofunde desigualdades sociais.",
+                    "Assim, é crucial que a sociedade se prepare para as transformações, buscando um equilíbrio entre a inovação tecnológica e a proteção dos trabalhadores."
+                ]
+            },
+            {
+                id: 'p4',
+                title: 'Parágrafo 4: Desafios Éticos da IA',
+                correctOrder: [
+                    "A rápida evolução da Inteligência Artificial levanta importantes questões éticas que precisam ser consideradas para garantir um desenvolvimento responsável.",
+                    "Conforme diversos especialistas em ética digital, um dos principais desafios é o risco de viés nos algoritmos, que podem reproduzir e até amplificar preconceitos existentes nos dados de treinamento.",
+                    "Essa preocupação exige uma fiscalização constante e a criação de diretrizes claras para evitar decisões injustas ou discriminatórias por sistemas de IA.",
+                    "Portanto, a ética deve ser um pilar fundamental na concepção e implementação de qualquer tecnologia inteligente."
+                ]
+            },
+            {
+                id: 'p5',
+                title: 'Parágrafo 5: A Importância da Educação na Era da IA',
+                correctOrder: [
+                    "Diante das transformações trazidas pela Inteligência Artificial, a educação assume um papel central na preparação dos jovens para o futuro.",
+                    "Como defende o economista-chefe do Google, a IA pode \"ajudar os professores e dar mais acesso a materiais de qualidade\", indicando um potencial de aprimoramento do ensino.",
+                    "Contudo, é essencial que as escolas desenvolvam habilidades como o pensamento crítico e a criatividade, que são complementares às capacidades da IA e valorizadas no mercado de trabalho.",
+                    "Assim, investir em uma educação que prepare os alunos para interagir com a IA de forma consciente é crucial para o seu sucesso."
+                ]
+            }
+        ];
+
+        let shuffledParagraphsState = []; // Armazena o estado atual das frases embaralhadas para cada parágrafo
+        let transferredPhrasesState = {}; // Armazena as frases transferidas para cada parágrafo
+
+        // Função para embaralhar um array
+        function shuffleArray(array) {
+            const shuffled = [...array]; // Cria uma cópia para não modificar o original
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // Inicializa os dados para o exercício de Clique-para-Transferir
+        function initializeClickToTransfer() {
+            shuffledParagraphsState = paragraphData.map(p => ({
+                id: p.id,
+                shuffled: shuffleArray([...p.correctOrder]) // Embaralha uma cópia da ordem correta
+            }));
+            transferredPhrasesState = {};
+            paragraphData.forEach(p => transferredPhrasesState[p.id] = []); // Inicializa arrays vazios para frases transferidas
+        }
+
+        // --- Função Principal de Atualização da UI ---
+        function updateGameUI() {
+            missionTitleElement.innerHTML = missionsData[currentMissionIndex].title;
+            missionContentElement.innerHTML = missionsData[currentMissionIndex].content;
+
+            // Atualiza visibilidade dos botões de navegação
+            prevBtn.disabled = currentMissionIndex === 0;
+            nextBtn.disabled = currentMissionIndex === missionsData.length - 1;
+
+            // Lógica específica para cada tipo de missão
+            if (missionsData[currentMissionIndex].title.includes("Missão 5")) { // Exercício de Reconhecimento
+                attachRecognitionListeners();
+            } else if (missionsData[currentMissionIndex].title.includes("Missão 6") && missionsData[currentMissionIndex].title.includes("Completando o Parágrafo")) { // Nova Missão 6
+                attachRecognitionListeners(); // Reutiliza a função para quiz de preenchimento
+            } else if (missionsData[currentMissionIndex].title.includes("Missão 6") && missionsData[currentMissionIndex].title.includes("Quebra-Cabeça")) { // Antiga Missão 6, agora 7
+                renderClickToTransferExercise();
+            } else if (missionsData[currentMissionIndex].title.includes("Missão 7")) { // Antiga Missão 7, agora 8
+                attachRecognitionListeners(); // Reutiliza a função para quiz avançado
+            }
+            
+            // Rola para o topo da área de conteúdo ao mudar de missão
+            document.getElementById('missionContentContainer').scrollTop = 0;
+        }
+
+        // --- Lógica do Exercício de Reconhecimento (Missão 5 e 7) ---
+        function attachRecognitionListeners() {
+            // Limpa os listeners antigos para evitar duplicação em todas as perguntas
+            document.querySelectorAll('.bg-blue-50 button').forEach(button => {
+                button.onclick = null; // Remove o listener anterior
+                button.addEventListener('click', (event) => {
+                    const questionDiv = event.target.closest('.bg-blue-50');
+                    const questionText = questionDiv.querySelector('p.font-semibold').textContent;
+                    const match = questionText.match(/^(\d+)\./);
+                    if (match && match[1]) {
+                        let questionNumber = parseInt(match[1]);
+                        // Ajusta o ID da questão para as missões que têm perguntas a partir de um número maior
+                        if (currentMissionIndex === 5) { // Missão "Completando o Parágrafo" (q10 a q14)
+                            questionNumber += 9; // 1 -> 10, 2 -> 11, etc.
+                        } else if (currentMissionIndex === 6) { // Missão "Desafios Avançados" (q7 a q9)
+                            questionNumber += 6; // 1 -> 7, 2 -> 8, 3 -> 9
+                        }
+                        checkRecognitionAnswer(`q${questionNumber}`);
+                    }
+                });
+            });
+        }
+
+        window.checkRecognitionAnswer = function(questionId) {
+            const selectedOption = document.querySelector(`input[name="${questionId}"]:checked`);
+            const feedbackElement = document.getElementById(`feedback_${questionId}`);
+            
+            if (!selectedOption) {
+                feedbackElement.textContent = 'Por favor, selecione uma opção.';
+                feedbackElement.className = 'feedback-message feedback-incorrect';
+                return;
+            }
+
+            const isCorrect = selectedOption.value === recognitionAnswers[questionId];
+            if (isCorrect) {
+                feedbackElement.textContent = 'Correto! Muito bem!';
+                feedbackElement.className = 'feedback-message feedback-correct';
+            } else {
+                let correctText = '';
+                // Customize feedback for each question if needed, otherwise general
+                const qMap = {
+                    q1: 'O objetivo é dar força ao seu argumento.',
+                    q2: 'Ele nos convida a pensar mais profundamente.',
+                    q3: 'O tópico frasal é a primeira frase e apresenta a ideia principal.',
+                    q4: 'É fundamental explicar a citação para conectá-la ao seu argumento.',
+                    q5: 'A análise é a sua "conversa" com a citação.',
+                    q6: 'O Economista-Chefe do Google tem uma visão mais otimista, ideal para defender os benefícios.',
+                    q7: 'A citação do Economista do Google é mais adequada para falar de benefícios e avanços.',
+                    q8: 'A análise correta foca em como a IA libera o potencial humano para tarefas mais complexas.',
+                    q9: 'O tópico frasal é a frase que introduz a ideia principal do parágrafo.',
+                    q10: 'O tópico frasal deve introduzir a ideia principal do parágrafo de forma clara.',
+                    q11: 'A citação deve ser de uma autoridade no assunto e relevante para o tema da sustentabilidade.',
+                    q12: 'A análise deve explicar a relação entre a citação e o ponto principal, destacando a necessidade de discernimento.',
+                    q13: 'O fechamento deve concluir a ideia do parágrafo, reforçando a importância da leitura.',
+                    q14: 'A citação da OMS é uma autoridade reconhecida para o tema da saúde e atividade física.'
+                };
+                
+                feedbackElement.textContent = `Ops! Tente novamente. ${qMap[questionId] || ''}`;
+                feedbackElement.className = 'feedback-message feedback-incorrect';
+            }
+        };
+
+        // --- Lógica do Exercício de Clique-para-Transferir (Antiga Missão 6, agora Missão 7) ---
+        function renderClickToTransferExercise() {
+            const container = document.getElementById('clickToTransferContainer');
+            if (!container) return; 
+
+            container.innerHTML = ''; // Limpa o conteúdo anterior
+
+            paragraphData.forEach((paraData) => {
+                const paraElement = document.createElement('div');
+                paraElement.className = 'bg-white p-6 rounded-lg shadow-md mb-8 border border-gray-200';
+                
+                const currentShuffled = shuffledParagraphsState.find(p => p.id === paraData.id).shuffled;
+                const currentTransferred = transferredPhrasesState[paraData.id];
+
+                paraElement.innerHTML = `
+                    <h3 class="text-xl font-semibold mb-4 text-blue-700 text-center">${paraData.title}</h3>
+                    <div class="flex flex-col md:flex-row gap-6">
+                        <div id="shuffled-phrases-${paraData.id}" class="flex-1 bg-gray-50 p-4 rounded-md border border-gray-100 min-h-[150px] sm:min-h-[200px]">
+                            <p class="font-semibold mb-2 text-gray-800 text-base sm:text-lg">Frases para Clicar:</p>
+                            ${currentShuffled.length === 0 ?
+                                '<p class="text-gray-500 italic text-sm sm:text-base">Todas as frases foram transferidas.</p>' :
+                                currentShuffled.map((phrase, index) => `
+                                <div data-para-id="${paraData.id}" data-phrase="${phrase}" class="phrase-item bg-purple-100 text-purple-800 p-3 mb-2 rounded-md shadow-sm hover:bg-purple-200 transition-colors text-sm sm:text-base">
+                                    ${phrase}
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <div id="transferred-phrases-${paraData.id}" class="flex-1 bg-green-50 p-4 rounded-md border border-green-200 min-h-[150px] sm:min-h-[200px]">
+                            <p class="font-semibold mb-2 text-gray-800 text-base sm:text-lg">Parágrafo Montado:</p>
+                            ${currentTransferred.length === 0 ?
+                                '<p class="text-gray-500 italic text-sm sm:text-base">Clique nas frases para transferir...</p>' :
+                                currentTransferred.map(phrase => `
+                                    <div class="phrase-item transferred bg-green-100 text-green-800 p-3 mb-2 rounded-md shadow-sm text-sm sm:text-base">${phrase}</div>
+                                `).join('')
+                            }
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2 mt-4">
+                        <button onclick="resetClickToTransfer('${paraData.id}')" class="game-button bg-yellow-500 hover:bg-yellow-600 !text-white !border-yellow-700 !shadow-md !text-sm sm:!text-base">Reiniciar</button>
+                        <button onclick="checkClickToTransfer('${paraData.id}')" class="game-button bg-blue-600 hover:bg-blue-700 !text-white !border-blue-800 !shadow-md !text-sm sm:!text-base">Verificar</button>
+                    </div>
+                    <p id="feedback-${paraData.id}" class="feedback-message"></p>
+                `;
+                container.appendChild(paraElement);
+
+                // Adiciona os event listeners de clique usando delegação
+                const shuffledPhrasesDiv = document.getElementById(`shuffled-phrases-${paraData.id}`);
+                if (shuffledPhrasesDiv) {
+                    shuffledPhrasesDiv.addEventListener('click', (e) => {
+                        // Verifica se o clique foi em um item de frase e se ele ainda não foi transferido
+                        if (e.target.classList.contains('phrase-item') && !e.target.classList.contains('transferred')) {
+                            const clickedPhrase = e.target.dataset.phrase;
+                            const paraId = e.target.dataset.paraId;
+
+                            const currentParaShuffled = shuffledParagraphsState.find(p => p.id === paraId);
+                            const phraseIndexInShuffled = currentParaShuffled.shuffled.indexOf(clickedPhrase);
+
+                            if (phraseIndexInShuffled > -1) {
+                                // Remove da lista de embaralhadas
+                                currentParaShuffled.shuffled.splice(phraseIndexInShuffled, 1);
+                                
+                                // Adiciona à lista de transferidas
+                                transferredPhrasesState[paraId].push(clickedPhrase);
+
+                                // Re-renderiza o exercício para atualizar a UI
+                                renderClickToTransferExercise();
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        window.resetClickToTransfer = function(paraId) {
+            const para = paragraphData.find(p => p.id === paraId);
+            shuffledParagraphsState.find(p => p.id === paraId).shuffled = shuffleArray([...para.correctOrder]);
+            transferredPhrasesState[paraId] = [];
+            document.getElementById(`feedback-${paraId}`).textContent = '';
+            renderClickToTransferExercise(); // Re-renderiza para resetar a UI
+        }
+
+        window.checkClickToTransfer = function(paraId) {
+            const feedbackElement = document.getElementById(`feedback-${paraId}`);
+            const currentTransferred = transferredPhrasesState[paraId];
+            const correctOrder = paragraphData.find(p => p.id === paraId).correctOrder;
+
+            const isCorrect = JSON.stringify(currentTransferred) === JSON.stringify(correctOrder);
+
+            if (isCorrect) {
+                feedbackElement.textContent = '🎉 Parabéns! Parágrafo montado corretamente!';
+                feedbackElement.className = 'feedback-message feedback-correct';
+            } else {
+                feedbackElement.textContent = '🤔 Quase lá! A ordem ainda não está perfeita. Tente novamente!';
+                feedbackElement.className = 'feedback-message feedback-incorrect';
+            }
+        }
+
+        // --- Lógica de Navegação Geral ---
+        function navigateMission(direction) {
+            if (direction === 'next' && currentMissionIndex < missionsData.length - 1) {
+                currentMissionIndex++;
+            } else if (direction === 'prev' && currentMissionIndex > 0) {
+                currentMissionIndex--;
+            }
+            updateGameUI();
+        }
+
+        // Adiciona event listeners aos botões de navegação
+        prevBtn.addEventListener('click', () => navigateMission('prev'));
+        nextBtn.addEventListener('click', () => navigateMission('next'));
+
+        // Renderização inicial ao carregar a página
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeClickToTransfer(); // Inicializa dados para o exercício de clique-para-transferir
+            updateGameUI(); // Renderiza a primeira missão
+        });
+
+    </script>
+</body>
+</html>
